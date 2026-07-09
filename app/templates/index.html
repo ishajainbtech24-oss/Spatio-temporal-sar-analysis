@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>SAR Flood Detection</title>
+</head>
+
+<body>
+
+    <h1>SAR Flood Detection System</h1>
+
+    <p>Upload a SAR image for flood prediction.</p>
+
+    <form action="/predict" method="POST" enctype="multipart/form-data">
+
+        <input
+            type="file"
+            name="image"
+            accept=".png,.jpg,.jpeg,.tif,.tiff"
+            required>
+
+        <br><br>
+
+        <button type="submit">
+            Upload & Predict
+        </button>
+
+    </form>
+
+</body>
+
+</html>
