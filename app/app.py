@@ -1,39 +1,51 @@
-from flask import Flask, render_template, request
+from utils.predict import predict_flood
+from flask import Flask, render_template, request, send_from_directory
 import os
 
-# Create Flask application
 app = Flask(__name__)
 
-# Folder to store uploaded images
 UPLOAD_FOLDER = "uploads"
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
-# Create uploads folder if it doesn't exist
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-# Home Page
-@app.route("/")
-def home():
+
+@app.route("/", methods=["GET", "POST"])
+def index():
+
+    if request.method == "POST":
+
+        file = request.files["image"]
+
+        if file.filename == "":
+            return render_template("index.html")
+
+        upload_path = os.path.join(
+            app.config["UPLOAD_FOLDER"],
+            file.filename
+        )
+
+        file.save(upload_path)
+
+        result = predict_flood(upload_path)
+
+        return render_template(
+            "result.html",
+            image=file.filename,
+            prediction=result["label"],
+            confidence=result["confidence"]
+        )
+
     return render_template("index.html")
 
-# Upload Route
-@app.route("/predict", methods=["POST"])
-def predict():
 
-    if "image" not in request.files:
-        return "No image uploaded!"
+@app.route("/uploads/<filename>")
+def uploaded_file(filename):
+    return send_from_directory(
+        app.config["UPLOAD_FOLDER"],
+        filename
+    )
 
-    image = request.files["image"]
 
-    if image.filename == "":
-        return "No image selected!"
-
-    image_path = os.path.join(app.config["UPLOAD_FOLDER"], image.filename)
-
-    image.save(image_path)
-
-    return f"Image '{image.filename}' uploaded successfully!"
-
-# Run Application
 if __name__ == "__main__":
     app.run(debug=True)
