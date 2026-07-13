@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>GEO-SAR Intelligence Systems | Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind Configuration -->
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-container-lowest": "#060e20",
+                    "surface": "#0b1326",
+                    "inverse-on-surface": "#283044",
+                    "surface-container-high": "#222a3d",
+                    "on-tertiary-container": "#9d4300",
+                    "on-error": "#690005",
+                    "tertiary-fixed": "#ffdbca",
+                    "on-secondary-fixed": "#00201c",
+                    "on-primary-fixed-variant": "#004f54",
+                    "surface-container-highest": "#2d3449",
+                    "outline-variant": "#3b494b",
+                    "on-tertiary-fixed": "#341100",
+                    "error": "#ffb4ab",
+                    "on-background": "#dae2fd",
+                    "error-container": "#93000a",
+                    "secondary": "#4fdbc8",
+                    "on-tertiary-fixed-variant": "#783200",
+                    "on-secondary-fixed-variant": "#005048",
+                    "primary-container": "#00f0ff",
+                    "surface-tint": "#00dbe9",
+                    "inverse-surface": "#dae2fd",
+                    "tertiary-fixed-dim": "#ffb690",
+                    "inverse-primary": "#006970",
+                    "on-error-container": "#ffdad6",
+                    "on-primary-container": "#006970",
+                    "surface-container": "#171f33",
+                    "outline": "#849495",
+                    "on-secondary": "#003731",
+                    "on-surface": "#dae2fd",
+                    "on-primary": "#00363a",
+                    "tertiary-container": "#ffcfb8",
+                    "surface-container-low": "#131b2e",
+                    "primary-fixed-dim": "#00dbe9",
+                    "on-tertiary": "#552100",
+                    "secondary-container": "#04b4a2",
+                    "background": "#0b1326",
+                    "primary": "#dbfcff",
+                    "secondary-fixed-dim": "#4fdbc8",
+                    "on-secondary-container": "#003f38",
+                    "surface-dim": "#0b1326",
+                    "on-surface-variant": "#b9cacb",
+                    "tertiary": "#fff3ef",
+                    "surface-bright": "#31394d",
+                    "on-primary-fixed": "#002022",
+                    "surface-variant": "#2d3449",
+                    "secondary-fixed": "#71f8e4",
+                    "primary-fixed": "#7df4ff"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "gutter": "16px",
+                    "base": "4px",
+                    "xl": "64px",
+                    "xs": "8px",
+                    "sidebar-width": "320px",
+                    "sm": "16px",
+                    "md": "24px",
+                    "lg": "40px"
+            },
+            "fontFamily": {
+                    "headline-lg": ["Hanken Grotesk"],
+                    "body-md": ["Hanken Grotesk"],
+                    "label-sm": ["JetBrains Mono"],
+                    "label-md": ["JetBrains Mono"],
+                    "headline-md": ["Hanken Grotesk"],
+                    "code-data": ["JetBrains Mono"],
+                    "headline-lg-mobile": ["Hanken Grotesk"],
+                    "body-lg": ["Hanken Grotesk"]
+            },
+            "fontSize": {
+                    "headline-lg": ["40px", {"lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "400"}],
+                    "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                    "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                    "code-data": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+                    "headline-lg-mobile": ["30px", {"lineHeight": "36px", "fontWeight": "700"}],
+                    "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            background-color: #0b1326;
+            color: #dae2fd;
+            -webkit-font-smoothing: antialiased;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #00dbe9;
+            border-radius: 2px;
+        }
+        .glass-overlay {
+            backdrop-filter: blur(12px);
+            background: rgba(11, 19, 38, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .threat-pulse {
+            animation: pulse-threat 2s infinite;
+        }
+        @keyframes pulse-threat {
+            0% { box-shadow: 0 0 0 0 rgba(255, 180, 171, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(255, 180, 171, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 180, 171, 0); }
+        }
+    </style>
+</head>
+<body class="font-body-md text-body-md overflow-hidden">
+<!-- TopNavBar -->
+<nav class="fixed top-0 w-full z-50 bg-surface-container-high shadow-sm border-b border-outline-variant flex justify-between items-center px-gutter h-16">
+<div class="flex items-center gap-xl">
+<span class="font-headline-lg text-headline-lg text-primary-fixed tracking-tight">GEO-SAR</span>
+<div class="hidden md:flex gap-md items-center">
+<a href="/dashboard">Dashboard</a>
+<a href="/upload">Imagery</a>
+<a href="/map">Flood Map</a>
+</div>
+</div>
+<div class="flex items-center gap-md">
+<div class="relative hidden lg:block">
+<span class="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-outline">search</span>
+<input class="bg-surface-container-lowest border border-outline-variant rounded-lg pl-10 pr-4 py-1.5 text-label-md font-label-md w-64 focus:outline-none focus:border-primary-fixed-dim transition-all" placeholder="Search coordinates..." type="text"/>
+</div>
+<div class="flex items-center gap-sm">
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors active:opacity-80">notifications</button>
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors active:opacity-80">settings</button>
+</div>
+<button class="bg-primary-container text-on-primary-container px-md py-2 rounded-lg font-label-md text-label-md font-bold transition-all active:scale-95">Deploy Analysis</button>
+<div class="w-8 h-8 rounded-full overflow-hidden border border-outline">
+<img class="w-full h-8 object-cover" data-alt="A professional analyst profile picture with a high-tech corporate aesthetic, featuring soft lighting and a blurred digital background of satellite imagery. The individual is wearing a dark, minimal professional attire, conveying expertise and precision in the geospatial intelligence field." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCg4r8dnO5SZx2dfNpfXM0GAauU5L970XyKMCJ0S5TExjIi5QGS-ImpnS0C-DYctrNIaTW5ahXyfW4-kt88zhJ82-p4_QyujYlPKnkaRVEBdpJLxt2GxpS5pegcV1220lCuWsEy3RZPi08mzWJ31w6QqCBV05FbWKeAATpESchdYnCFvcc_QktRq9DofPHREIdDCjDh3lBFvnNbuF_O9iYS9cnMaUt4uF4ReASsFfMbQn5qrl7jJ4iCpwyVOYxdoqtmCeflcZmQ1y8"/>
+</div>
+</div>
+</nav>
+<!-- SideNavBar -->
+<aside class="fixed left-0 top-16 h-[calc(100vh-64px)] w-sidebar-width bg-surface-container-low border-r border-outline-variant flex flex-col py-md px-sm z-40 hidden md:flex">
+<div class="mb-lg">
+<div class="flex items-center gap-sm mb-xs">
+<div class="w-10 h-10 bg-secondary-container rounded flex items-center justify-center text-on-secondary-container">
+<span class="material-symbols-outlined">satellite_alt</span>
+</div>
+<div>
+<h3 class="font-headline-md text-headline-md text-primary leading-tight">Mission Control</h3>
+<p class="font-label-sm text-label-sm text-secondary">SAR-7 Active</p>
+</div>
+</div>
+</div>
+<nav class="flex-1 flex flex-col gap-xs">
+<div class="flex items-center gap-sm px-sm py-3 bg-secondary-container text-on-secondary-container border-l-4 border-secondary font-bold font-label-md text-label-md cursor-pointer transition-all active:scale-95">
+<span class="material-symbols-outlined">live_tv</span>
+<span>Live Feed</span>
+</div>
+<div class="flex items-center gap-sm px-sm py-3 text-on-surface-variant hover:bg-surface-variant/50 font-label-md text-label-md cursor-pointer transition-all active:scale-95">
+<span class="material-symbols-outlined">layers</span>
+<span>SAR Library</span>
+</div>
+<div class="flex items-center gap-sm px-sm py-3 text-on-surface-variant hover:bg-surface-variant/50 font-label-md text-label-md cursor-pointer transition-all active:scale-95">
+<span class="material-symbols-outlined">warning</span>
+<span>Threat Zones</span>
+</div>
+<div class="flex items-center gap-sm px-sm py-3 text-on-surface-variant hover:bg-surface-variant/50 font-label-md text-label-md cursor-pointer transition-all active:scale-95">
+<span class="material-symbols-outlined">history</span>
+<span>Historical</span>
+</div>
+<div class="flex items-center gap-sm px-sm py-3 text-on-surface-variant hover:bg-surface-variant/50 font-label-md text-label-md cursor-pointer transition-all active:scale-95">
+<span class="material-symbols-outlined">group</span>
+<span>Team</span>
+</div>
+</nav>
+<div class="mt-auto flex flex-col gap-xs">
+<button class="bg-surface-container-highest text-on-surface px-sm py-3 rounded-lg flex items-center justify-center gap-sm font-label-md text-label-md mb-md border border-outline-variant hover:bg-surface-bright transition-all">
+<span class="material-symbols-outlined">add</span>
+<span>New Analysis</span>
+</button>
+<div class="flex items-center gap-sm px-sm py-2 text-on-surface-variant hover:bg-surface-variant/50 font-label-md text-label-md cursor-pointer transition-all">
+<span class="material-symbols-outlined">help</span>
+<span>Help</span>
+</div>
+<div class="flex items-center gap-sm px-sm py-2 text-on-surface-variant hover:bg-surface-variant/50 font-label-md text-label-md cursor-pointer transition-all">
+<span class="material-symbols-outlined">check_circle</span>
+<span>Status</span>
+</div>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="fixed left-0 md:left-sidebar-width right-0 top-16 bottom-0 overflow-hidden bg-surface flex flex-col">
+<!-- Viewport Filling Map Area -->
+<div class="relative flex-1 bg-surface-container-lowest">
+<div class="absolute inset-0 z-0">
+<div class="w-full h-full bg-cover bg-center grayscale opacity-60" data-alt="A high-resolution satellite imagery map of a coastal region at night, with luminous radar overlays highlighting flood-prone areas in shades of neon cyan and tactical orange. The image has a dark, atmospheric tech-noir aesthetic, showing detailed topography and urban grid patterns beneath semi-transparent data layers." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCIM7lqhe9ufYIbk3_4o-dmdw6GH5QtT5nvi5klCJu1NBvnJ8kQNMvB3NJzTKCp52BnkwygPqL49Bz9wkkTn_qhhN8DUeaJiBfdOZ18Jfs5EjYe6YWprKNgruagrwoe_KvkZKqpTaTQ2y5sHH02liOnsr7dT02Y9pTsTa7SqTME5a-54lh05aPxeKZafrg4RShd_ljGNMgHHuQV7sekh9-q5EFEWGLj9UZeNgYwaL7AB_qlXlfhr2h2f9yuM0F9zJ_zTr2hTIpKBjI')"></div>
+<!-- Mock Map Overlays -->
+<div class="absolute top-1/4 left-1/3 w-24 h-24 bg-error/20 rounded-full border-2 border-error threat-pulse flex items-center justify-center">
+<span class="text-error font-code-data text-label-sm bg-background/80 px-1">ZONE-A1</span>
+</div>
+<div class="absolute top-1/2 right-1/4 w-32 h-32 bg-secondary/10 rounded-full border-2 border-secondary flex items-center justify-center">
+<span class="text-secondary font-code-data text-label-sm bg-background/80 px-1">RECOVERY_B</span>
+</div>
+</div>
+<!-- Floating Map Controls -->
+<div class="absolute right-gutter top-gutter flex flex-col gap-2 z-10">
+<div class="glass-overlay rounded-lg flex flex-col">
+<button class="p-3 text-on-surface-variant hover:text-primary transition-colors border-b border-outline-variant"><span class="material-symbols-outlined">add</span></button>
+<button class="p-3 text-on-surface-variant hover:text-primary transition-colors"><span class="material-symbols-outlined">remove</span></button>
+</div>
+<div class="glass-overlay rounded-lg flex flex-col">
+<button class="p-3 text-on-surface-variant hover:text-primary transition-colors border-b border-outline-variant"><span class="material-symbols-outlined">layers</span></button>
+<button class="p-3 text-on-surface-variant hover:text-primary transition-colors"><span class="material-symbols-outlined">my_location</span></button>
+</div>
+</div>
+<!-- Critical Alerts Overlay (Bento Cards) -->
+<div class="absolute bottom-gutter left-gutter right-gutter grid grid-cols-1 md:grid-cols-4 gap-sm z-10">
+<!-- Alert Card 1 -->
+<div class="glass-overlay p-md rounded-lg flex flex-col justify-between h-32 hover:border-primary/50 transition-all cursor-pointer">
+<div class="flex justify-between items-start">
+<span class="font-label-sm text-label-sm text-error bg-error/10 px-2 py-0.5 rounded border border-error/20">CRITICAL</span>
+<span class="material-symbols-outlined text-on-surface-variant">water_damage</span>
+</div>
+<div>
+<h4 class="font-headline-md text-headline-md text-primary leading-tight">3 Floods Detected</h4>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Delta Sector 4, 9, 12</p>
+</div>
+</div>
+<!-- Alert Card 2 -->
+<div class="glass-overlay p-md rounded-lg flex flex-col justify-between h-32 hover:border-primary/50 transition-all cursor-pointer">
+<div class="flex justify-between items-start">
+<span class="font-label-sm text-label-sm text-secondary bg-secondary/10 px-2 py-0.5 rounded border border-secondary/20">MONITORING</span>
+<span class="material-symbols-outlined text-on-surface-variant">satellite</span>
+</div>
+<div>
+<h4 class="font-headline-md text-headline-md text-primary leading-tight">SAR-11 Acquisition</h4>
+<p class="font-label-sm text-label-sm text-on-surface-variant">ETA: 14:20 UTC (Bering Strait)</p>
+</div>
+</div>
+<!-- Alert Card 3 -->
+<div class="glass-overlay p-md rounded-lg flex flex-col justify-between h-32 hover:border-primary/50 transition-all cursor-pointer">
+<div class="flex justify-between items-start">
+<span class="font-label-sm text-label-sm text-tertiary-fixed-dim bg-tertiary/10 px-2 py-0.5 rounded border border-tertiary/20">THREAT LIKELY</span>
+<span class="material-symbols-outlined text-on-surface-variant">volcano</span>
+</div>
+<div>
+<h4 class="font-headline-md text-headline-md text-primary leading-tight">Thermal Anomaly</h4>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Mount Merapi - +12.4% Δ</p>
+</div>
+</div>
+<!-- Alert Card 4 -->
+<div class="glass-overlay p-md rounded-lg flex flex-col justify-between h-32 hover:border-primary/50 transition-all cursor-pointer bg-primary-container/5">
+<div class="flex justify-between items-start">
+<span class="font-label-sm text-label-sm text-primary bg-primary/10 px-2 py-0.5 rounded border border-primary/20">SYSTEMS</span>
+<span class="material-symbols-outlined text-on-surface-variant">analytics</span>
+</div>
+<div>
+<h4 class="font-headline-md text-headline-md text-primary leading-tight">Reports Ready</h4>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Weekly Geospatial Summary</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Data Feed Panels (Bottom Section) -->
+<div class="h-64 border-t border-outline-variant grid grid-cols-1 lg:grid-cols-3 gap-0 divide-x divide-outline-variant bg-surface-container-lowest">
+<!-- Latest Satellite Passes Feed -->
+<div class="flex flex-col h-full overflow-hidden">
+<div class="px-gutter py-2 bg-surface-container border-b border-outline-variant flex justify-between items-center">
+<span class="font-label-md text-label-md text-on-surface uppercase tracking-wider">Satellite Feed</span>
+<span class="text-secondary font-code-data text-[10px]">LIVE SYNCING...</span>
+</div>
+<div class="flex-1 overflow-y-auto custom-scrollbar p-sm space-y-2">
+<div class="flex items-center gap-md p-2 hover:bg-surface-variant/20 rounded transition-colors group">
+<span class="font-code-data text-label-sm text-outline">12:04</span>
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+<div class="flex-1">
+<p class="font-label-md text-label-md text-on-surface">RADARSAT-2 Pass</p>
+<p class="text-[11px] text-on-surface-variant">North Atlantic Basin • 0.3m Resolution</p>
+</div>
+<span class="material-symbols-outlined text-outline group-hover:text-primary text-sm">open_in_new</span>
+</div>
+<div class="flex items-center gap-md p-2 hover:bg-surface-variant/20 rounded transition-colors group">
+<span class="font-code-data text-label-sm text-outline">11:45</span>
+<span class="w-2 h-2 rounded-full bg-outline"></span>
+<div class="flex-1">
+<p class="font-label-md text-label-md text-on-surface">Sentinel-1A Downlink</p>
+<p class="text-[11px] text-on-surface-variant">Sub-Saharan Corridors • VV+VH Polar</p>
+</div>
+<span class="material-symbols-outlined text-outline group-hover:text-primary text-sm">open_in_new</span>
+</div>
+<div class="flex items-center gap-md p-2 hover:bg-surface-variant/20 rounded transition-colors group">
+<span class="font-code-data text-label-sm text-outline">11:12</span>
+<span class="w-2 h-2 rounded-full bg-error"></span>
+<div class="flex-1">
+<p class="font-label-md text-label-md text-on-surface">SAR-7 Priority Capture</p>
+<p class="text-[11px] text-on-surface-variant">Zone-A1 Re-scan • High Interference</p>
+</div>
+<span class="material-symbols-outlined text-outline group-hover:text-primary text-sm">open_in_new</span>
+</div>
+</div>
+</div>
+<!-- Historical SAR Timeline -->
+<div class="flex flex-col h-full overflow-hidden">
+<div class="px-gutter py-2 bg-surface-container border-b border-outline-variant flex justify-between items-center">
+<span class="font-label-md text-label-md text-on-surface uppercase tracking-wider">Analysis Timeline</span>
+<span class="material-symbols-outlined text-on-surface-variant text-sm">timeline</span>
+</div>
+<div class="flex-1 p-sm flex flex-col justify-center">
+<div class="h-24 w-full bg-surface-container relative rounded-lg border border-outline-variant overflow-hidden">
+<!-- Custom Timeline Scrubber Visualization -->
+<div class="absolute bottom-0 left-0 w-full h-8 bg-surface-container-highest/50 flex justify-between px-2 items-center">
+<span class="font-code-data text-[10px] text-outline">24H AGO</span>
+<span class="font-code-data text-[10px] text-outline">12H</span>
+<span class="font-code-data text-[10px] text-primary">NOW</span>
+</div>
+<!-- Mock Sparkline -->
+<svg class="absolute inset-0 w-full h-16 pointer-events-none" preserveaspectratio="none">
+<path d="M0,40 Q50,10 100,50 T200,30 T300,60 T400,20 T500,45" fill="none" stroke="#00dbe9" stroke-width="2"></path>
+<path d="M0,50 Q60,30 120,60 T240,40 T360,70 T480,30 T600,55" fill="none" stroke="#ffb4ab" stroke-dasharray="4,2" stroke-width="1"></path>
+</svg>
+<div class="absolute top-0 left-3/4 h-full w-[2px] bg-primary shadow-[0_0_8px_#00dbe9] z-10"></div>
+</div>
+<div class="mt-xs grid grid-cols-3 gap-xs">
+<div class="text-center bg-surface-variant/30 p-1.5 rounded">
+<p class="text-[10px] text-on-surface-variant font-label-sm">AVG PRECIP</p>
+<p class="font-code-data text-label-md text-secondary">42mm</p>
+</div>
+<div class="text-center bg-surface-variant/30 p-1.5 rounded">
+<p class="text-[10px] text-on-surface-variant font-label-sm">THREAT LVL</p>
+<p class="font-code-data text-label-md text-error">HIGH</p>
+</div>
+<div class="text-center bg-surface-variant/30 p-1.5 rounded">
+<p class="text-[10px] text-on-surface-variant font-label-sm">STABILITY</p>
+<p class="font-code-data text-label-md text-primary">94%</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Quick Access Reports -->
+<div class="flex flex-col h-full overflow-hidden">
+<div class="px-gutter py-2 bg-surface-container border-b border-outline-variant flex justify-between items-center">
+<span class="font-label-md text-label-md text-on-surface uppercase tracking-wider">Recent Reports</span>
+<button class="text-primary text-[11px] font-label-sm hover:underline">VIEW ALL</button>
+</div>
+<div class="flex-1 p-sm space-y-sm">
+<div class="flex items-start gap-sm p-3 bg-surface-container-high rounded border border-outline-variant hover:border-primary/40 transition-all cursor-pointer">
+<div class="w-10 h-10 bg-primary/10 rounded flex items-center justify-center text-primary shrink-0">
+<span class="material-symbols-outlined">description</span>
+</div>
+<div>
+<p class="font-label-md text-label-md text-on-surface">Impact_Assessment_Q3.pdf</p>
+<p class="text-[11px] text-on-surface-variant">Published 2h ago • 12.4 MB</p>
+</div>
+</div>
+<div class="flex items-start gap-sm p-3 bg-surface-container-high rounded border border-outline-variant hover:border-primary/40 transition-all cursor-pointer">
+<div class="w-10 h-10 bg-secondary/10 rounded flex items-center justify-center text-secondary shrink-0">
+<span class="material-symbols-outlined">analytics</span>
+</div>
+<div>
+<p class="font-label-md text-label-md text-on-surface">Delta_Flood_Dynamics_v2</p>
+<p class="text-[11px] text-on-surface-variant">Published 5h ago • Dynamic Dashboard</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Footer -->
+<footer class="fixed bottom-0 w-full z-50 bg-surface-container-lowest border-t border-outline-variant h-10 flex items-center px-gutter text-on-surface-variant">
+<div class="flex justify-between w-full max-w-7xl mx-auto items-center">
+<span class="font-label-sm text-label-sm">© 2024 GEO-SAR Intelligence Systems. Mission Critical Precision.</span>
+<div class="flex gap-md">
+<a class="font-label-sm text-label-sm hover:text-secondary transition-opacity" href="#">Security Architecture</a>
+<a class="font-label-sm text-label-sm hover:text-secondary transition-opacity" href="#">API Docs</a>
+<div class="flex items-center gap-xs ml-md">
+<span class="w-2 h-2 rounded-full bg-secondary animate-pulse"></span>
+<span class="font-label-sm text-label-sm text-on-surface">All Nodes Operational</span>
+</div>
+</div>
+</div>
+</footer>
+<script>
+        // Micro-interactions and real-time feel
+        setInterval(() => {
+            const timeElements = document.querySelectorAll('.font-code-data');
+            // This would normally update timestamps or live data
+        }, 30000);
+
+        // Simple pulse animation trigger for threat zones
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log("GEO-SAR Intelligence Dashboard Initialized.");
+        });
+    </script>
+</body></html>

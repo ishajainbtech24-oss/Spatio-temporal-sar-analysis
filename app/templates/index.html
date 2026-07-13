@@ -1,33 +1,369 @@
 <!DOCTYPE html>
-<html lang="en">
 
-<head>
-    <meta charset="UTF-8">
-    <title>SAR Flood Detection</title>
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>GEO-SAR | Mission Critical Geospatial Intelligence</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        body {
+            background-color: #0b1326;
+            color: #dae2fd;
+            font-family: 'Hanken Grotesk', sans-serif;
+            overflow-x: hidden;
+        }
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .scanline {
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(to right, transparent, #00f0ff, transparent);
+            position: absolute;
+            top: 0;
+            left: 0;
+            animation: scan 4s linear infinite;
+            z-index: 10;
+        }
+        @keyframes scan {
+            0% { top: 0; opacity: 0; }
+            50% { opacity: 1; }
+            100% { top: 100%; opacity: 0; }
+        }
+        .radar-pulse {
+            position: absolute;
+            border-radius: 50%;
+            border: 1px solid rgba(0, 240, 255, 0.5);
+            animation: pulse 4s ease-out infinite;
+        }
+        @keyframes pulse {
+            0% { width: 0; height: 0; opacity: 1; }
+            100% { width: 500px; height: 500px; opacity: 0; }
+        }
+    </style>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-container-lowest": "#060e20",
+                    "surface": "#0b1326",
+                    "inverse-on-surface": "#283044",
+                    "surface-container-high": "#222a3d",
+                    "on-tertiary-container": "#9d4300",
+                    "on-error": "#690005",
+                    "tertiary-fixed": "#ffdbca",
+                    "on-secondary-fixed": "#00201c",
+                    "on-primary-fixed-variant": "#004f54",
+                    "surface-container-highest": "#2d3449",
+                    "outline-variant": "#3b494b",
+                    "on-tertiary-fixed": "#341100",
+                    "error": "#ffb4ab",
+                    "on-background": "#dae2fd",
+                    "error-container": "#93000a",
+                    "secondary": "#4fdbc8",
+                    "on-tertiary-fixed-variant": "#783200",
+                    "on-secondary-fixed-variant": "#005048",
+                    "primary-container": "#00f0ff",
+                    "surface-tint": "#00dbe9",
+                    "inverse-surface": "#dae2fd",
+                    "tertiary-fixed-dim": "#ffb690",
+                    "inverse-primary": "#006970",
+                    "on-error-container": "#ffdad6",
+                    "on-primary-container": "#006970",
+                    "surface-container": "#171f33",
+                    "outline": "#849495",
+                    "on-secondary": "#003731",
+                    "on-surface": "#dae2fd",
+                    "on-primary": "#00363a",
+                    "tertiary-container": "#ffcfb8",
+                    "surface-container-low": "#131b2e",
+                    "primary-fixed-dim": "#00dbe9",
+                    "on-tertiary": "#552100",
+                    "secondary-container": "#04b4a2",
+                    "background": "#0b1326",
+                    "primary": "#dbfcff",
+                    "secondary-fixed-dim": "#4fdbc8",
+                    "on-secondary-container": "#003f38",
+                    "surface-dim": "#0b1326",
+                    "on-surface-variant": "#b9cacb",
+                    "tertiary": "#fff3ef",
+                    "surface-bright": "#31394d",
+                    "on-primary-fixed": "#002022",
+                    "surface-variant": "#2d3449",
+                    "secondary-fixed": "#71f8e4",
+                    "primary-fixed": "#7df4ff"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "gutter": "16px",
+                    "base": "4px",
+                    "xl": "64px",
+                    "xs": "8px",
+                    "sidebar-width": "320px",
+                    "sm": "16px",
+                    "md": "24px",
+                    "lg": "40px"
+            },
+            "fontFamily": {
+                    "headline-lg": ["Hanken Grotesk"],
+                    "body-md": ["Hanken Grotesk"],
+                    "label-sm": ["JetBrains Mono"],
+                    "label-md": ["JetBrains Mono"],
+                    "headline-md": ["Hanken Grotesk"],
+                    "code-data": ["JetBrains Mono"],
+                    "headline-lg-mobile": ["Hanken Grotesk"],
+                    "body-lg": ["Hanken Grotesk"]
+            },
+            "fontSize": {
+                    "headline-lg": ["40px", {"lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "400"}],
+                    "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                    "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                    "code-data": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+                    "headline-lg-mobile": ["30px", {"lineHeight": "36px", "fontWeight": "700"}],
+                    "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}]
+            }
+          },
+        },
+      }
+    </script>
 </head>
+<body class="bg-background text-on-surface">
+<!-- TopNavBar -->
+<nav class="fixed top-0 w-full z-50 bg-surface-container-high shadow-sm border-b border-outline-variant flex justify-between items-center px-gutter h-16">
+<div class="flex items-center gap-md">
+<span class="font-headline-lg text-headline-lg text-primary-fixed tracking-tight">GEO-SAR</span>
+<div class="hidden md:flex items-center gap-sm ml-lg">
+<a class="font-label-md text-label-md text-primary border-b-2 border-primary pb-1 transition-colors duration-200" href="#">Dashboard</a>
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors duration-200" href="#">Imagery</a>
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors duration-200" href="#">Flood Map</a>
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors duration-200" href="#">Reports</a>
+</div>
+</div>
+<div class="flex items-center gap-sm">
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary">notifications</button>
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary">settings</button>
+<div class="w-8 h-8 rounded-full overflow-hidden border border-outline">
+<img class="w-full h-full object-cover" data-alt="A professional headshot of a female data analyst wearing a headset in a dark, high-tech mission control room. The lighting is dominated by cool blue screen glows, reflecting off her glasses. The overall aesthetic is clean, corporate, and technologically advanced, fitting a high-stakes geospatial monitoring environment." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCT0HplPQ32K5JE0Xape_I4-Oflidcr9EwmmAeS0Ke0GCjetro093pJRAj1GQQBggbnt-EDlpg5B-XUaa8exKXnTNk6SNQ_RsrOJZGd3hJ4mfv2cesnvvttuu0Mka-OzjY4RuchkNOzTXixycueuqhaQxDiJzGH-Fvqofeh-QrU_DfWFmYd1DJKWqZ2uWhKThWx_ABremENzfapvIueMHr3dbdpa-AxV6DN2wF3HFm05wR5Apbmgt4pvBNEaI6mP_GdbXI1wqQ8k7s"/>
+</div>
+<button class="ml-sm bg-primary-container text-on-primary-container px-md py-xs rounded font-label-md text-label-md hover:opacity-90 active:opacity-80 transition-all">
+                Deploy Analysis
+            </button>
+</div>
+</nav>
+<!-- Main Content Area -->
+<main class="pt-16 min-h-screen">
+<!-- Hero Section -->
+<section class="relative h-[870px] flex items-center justify-center overflow-hidden">
+<!-- Background Visualization -->
+<div class="absolute inset-0 z-0">
+<div class="w-full h-full bg-cover bg-center opacity-40 grayscale-[0.5] contrast-125" data-alt="A high-altitude synthetic aperture radar (SAR) satellite view of a coastal city at night. The image is rendered in a technical false-color palette of deep indigo and neon cyan, highlighting structural density and water bodies. Digital telemetry overlays, grid lines, and data points are visible, creating a mission-critical, technical atmosphere." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuA4zTIcH_9AONhcX4y39uS5J54PNTfPss--ySHVf8dR21qWE4kFaRvMGLPf2hASHtrtMpySfD1Wx9cuLLFjo8whqa12OfkGHAhF6Re1qlAOjiRSzHxzxv9HZQYGto0l1q45cydIlZsKHyE-U5MBz9SquKsmP5BMC_IfijSZYYv5iRsF0rulx1jOFFSQud-NaULaP5HUDH3lMAeewDXKGjf6nlbw_fQN8VhNAJapX7jtzdCvU8-zDnsFZBqys8TzYFJ9n1kSXMwz5bo')"></div>
+<div class="absolute inset-0 bg-gradient-to-t from-background via-transparent to-surface-container-high/50"></div>
+<div class="scanline"></div>
+<!-- Animated decorative elements -->
+<div class="radar-pulse top-1/4 left-1/3"></div>
+<div class="radar-pulse bottom-1/3 right-1/4" style="animation-delay: 2s;"></div>
+</div>
+<div class="relative z-10 max-w-7xl mx-auto px-gutter grid grid-cols-1 lg:grid-cols-2 gap-xl items-center">
+<div class="space-y-md">
+<div class="inline-flex items-center gap-xs px-sm py-1 bg-secondary-container/20 border border-secondary text-secondary rounded-full">
+<span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1;">satellite_alt</span>
+<span class="font-label-sm text-label-sm uppercase tracking-wider">SAR-7 Constellation Active</span>
+</div>
+<h1 class="font-headline-lg text-headline-lg md:text-[64px] md:leading-[72px] text-primary-fixed">
+                        Precise Intelligence <br/>
+<span class="text-secondary">Through the Clouds.</span>
+</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant max-w-xl">
+                        Harness the power of Synthetic Aperture Radar and proprietary AI to monitor environmental shifts, detect floods, and secure infrastructure in any weather, day or night.
+                    </p>
+<div class="flex flex-wrap gap-md pt-base">
+<button class="bg-primary-container text-on-primary-container px-xl py-md rounded-lg font-headline-md text-headline-md hover:scale-[1.02] active:scale-95 transition-all shadow-lg shadow-primary-container/20">
+                            <a href="/dashboard">
+    Launch Mission Control
+</a>
+                        </button>
+<button class="border border-outline text-on-surface px-xl py-md rounded-lg font-headline-md text-headline-md hover:bg-surface-variant transition-all">
+                            View SAR Library
+                        </button>
+</div>
+</div>
+<!-- Hero Side Panel (Bento Style) -->
+<div class="hidden lg:grid grid-cols-2 gap-sm">
+<div class="glass-panel p-md rounded-xl space-y-sm">
+<div class="flex justify-between items-start">
+<span class="material-symbols-outlined text-secondary">waves</span>
+<span class="font-code-data text-code-data text-error">+2.4m</span>
+</div>
+<p class="font-label-md text-label-md opacity-70 uppercase tracking-tight">Flood Inundation</p>
+<h3 class="font-headline-md text-headline-md">Rhine Delta</h3>
+<div class="w-full bg-surface-container-highest h-1 rounded-full overflow-hidden">
+<div class="bg-error w-3/4 h-full"></div>
+</div>
+</div>
+<div class="glass-panel p-md rounded-xl space-y-sm">
+<div class="flex justify-between items-start">
+<span class="material-symbols-outlined text-primary">analytics</span>
+<span class="font-code-data text-code-data text-secondary">99.8%</span>
+</div>
+<p class="font-label-md text-label-md opacity-70 uppercase tracking-tight">AI Confidence</p>
+<h3 class="font-headline-md text-headline-md">SAR-to-Flood</h3>
+<div class="w-full bg-surface-container-highest h-1 rounded-full overflow-hidden">
+<div class="bg-secondary w-[99.8%] h-full"></div>
+</div>
+</div>
+<div class="glass-panel p-md rounded-xl col-span-2 flex items-center justify-between">
+<div>
+<p class="font-label-md text-label-md opacity-70 uppercase tracking-tight">Global Constellation</p>
+<h3 class="font-headline-md text-headline-md">14 Active Nodes</h3>
+</div>
+<div class="flex -space-x-2">
+<div class="w-10 h-10 rounded-full border-2 border-surface bg-surface-variant flex items-center justify-center">
+<span class="material-symbols-outlined text-[20px]">radar</span>
+</div>
+<div class="w-10 h-10 rounded-full border-2 border-surface bg-secondary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-[20px] text-on-secondary-container">language</span>
+</div>
+<div class="w-10 h-10 rounded-full border-2 border-surface bg-primary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-[20px] text-on-primary-container">speed</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Stats Scrubber / Global Monitoring -->
+<section class="bg-surface-container-low border-y border-outline-variant py-lg">
+<div class="max-w-7xl mx-auto px-gutter grid grid-cols-2 md:grid-cols-4 gap-lg text-center">
+<div>
+<p class="font-label-md text-label-md text-on-surface-variant mb-xs">Data Processed</p>
+<h4 class="font-headline-lg text-headline-lg text-primary">1.2 PB</h4>
+</div>
+<div>
+<p class="font-label-md text-label-md text-on-surface-variant mb-xs">Latency</p>
+<h4 class="font-headline-lg text-headline-lg text-secondary">&lt; 45ms</h4>
+</div>
+<div>
+<p class="font-label-md text-label-md text-on-surface-variant mb-xs">Active Alerts</p>
+<h4 class="font-headline-lg text-headline-lg text-tertiary-fixed-dim">12 Regions</h4>
+</div>
+<div>
+<p class="font-label-md text-label-md text-on-surface-variant mb-xs">SAR Fidelity</p>
+<h4 class="font-headline-lg text-headline-lg text-primary">0.5m GSD</h4>
+</div>
+</div>
+</section>
+<!-- Capabilities: Bento Grid -->
+<section class="py-xl max-w-7xl mx-auto px-gutter">
+<div class="flex flex-col md:flex-row justify-between items-end mb-lg gap-md">
+<div class="max-w-2xl">
+<h2 class="font-headline-lg text-headline-lg text-primary-fixed mb-sm">End-to-End Geospatial Intelligence</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">GEO-SAR integrates raw radar telemetry with advanced neural networks to provide actionable insights when traditional optical imagery fails.</p>
+</div>
+<button class="text-secondary font-label-md text-label-md flex items-center gap-xs hover:gap-sm transition-all">
+                    Explore Technical Specs <span class="material-symbols-outlined">arrow_forward</span>
+</button>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-12 gap-md h-auto md:h-[600px]">
+<!-- Big Feature: AI Flood Prediction -->
+<div class="md:col-span-8 glass-panel rounded-xl overflow-hidden relative group">
+<div class="absolute inset-0 bg-cover bg-center group-hover:scale-105 transition-transform duration-700" data-alt="A detailed digital map interface showing a river basin with translucent blue overlays indicating projected flood zones. The visualization is hyper-technical, featuring topographic contour lines, water depth heatmaps in shades of yellow and orange, and moving arrows indicating current flow velocity. The UI style is dark, sleek, and highly data-driven." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDP6wtPvPIDIE3muGvZO0vnsy1IGlsF1-Y77cCJESAVC72XJm6rnrugMAqarbYayxnZsovVTkxr7agdLU8cfJ-yQy4pkYp0BTuRPkyh56AdjiSFGEVhki8NmEl3dAdCdZCLMbc9ig-b1vEyE7BJznU2yZ06OotnwlumUuCsA0fKRcPMlhupl1WrjXIVHNw-_a987B5lcJQTU1hKZ35dCQwybZmxfrizMBZ1zF2IoXRouCiumcVGiZQGscBwq9jwiwVo8mQUCGEBkgI')"></div>
+<div class="absolute inset-0 bg-gradient-to-t from-surface to-transparent"></div>
+<div class="absolute bottom-0 p-lg w-full">
+<div class="flex items-center gap-sm mb-xs">
+<span class="material-symbols-outlined text-secondary">water_drop</span>
+<span class="font-label-md text-label-md text-secondary font-bold uppercase tracking-widest">Core Engine</span>
+</div>
+<h3 class="font-headline-lg text-headline-lg text-primary mb-sm">SAR-to-Flood Neural Mapping</h3>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-lg">Our proprietary AI isolates water signatures from radar backscatter to generate precise flood inundation maps through heavy rain, smoke, or cloud cover.</p>
+</div>
+</div>
+<!-- Secondary Feature: Threat Detection -->
+<div class="md:col-span-4 space-y-md">
+<div class="h-1/2 glass-panel rounded-xl p-lg flex flex-col justify-end border-l-4 border-error">
+<span class="material-symbols-outlined text-error mb-sm">warning</span>
+<h4 class="font-headline-md text-headline-md text-on-surface mb-xs">Anomaly Alerts</h4>
+<p class="font-label-md text-label-md text-on-surface-variant">Real-time detection of structural subsidence and land movement in critical zones.</p>
+</div>
+<div class="h-1/2 glass-panel rounded-xl p-lg flex flex-col justify-end border-l-4 border-secondary">
+<span class="material-symbols-outlined text-secondary mb-sm">history</span>
+<h4 class="font-headline-md text-headline-md text-on-surface mb-xs">Historical Analysis</h4>
+<p class="font-label-md text-label-md text-on-surface-variant">15 years of archived SAR data for predictive climate modeling and trend analysis.</p>
+</div>
+</div>
+</div>
+</section>
+<!-- CTA Section -->
+<section class="py-xl mb-xl">
+<div class="max-w-4xl mx-auto text-center px-gutter">
+<div class="inline-block p-base rounded-full bg-surface-container-highest border border-outline-variant mb-md">
+<div class="px-md py-xs bg-primary-container/10 rounded-full">
+<span class="font-code-data text-code-data text-primary uppercase">v4.2 Analysis Engine Now Live</span>
+</div>
+</div>
+<h2 class="font-headline-lg text-headline-lg md:text-[48px] text-on-surface mb-md">Ready to secure your mission?</h2>
+<p class="font-body-lg text-body-lg text-on-surface-variant mb-lg">Access the world's most advanced synthetic aperture radar dashboard and start analyzing your zones of interest today.</p>
+<div class="flex flex-col sm:flex-row justify-center gap-md">
+<button class="bg-primary-fixed text-on-primary-fixed px-xl py-md rounded font-headline-md text-headline-md hover:brightness-110 active:scale-95 transition-all">
+                        Enter Command Center
+                    </button>
+<button class="border border-secondary text-secondary px-xl py-md rounded font-headline-md text-headline-md hover:bg-secondary/10 transition-all">
+                        Request API Access
+                    </button>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="bg-surface-container-lowest border-t border-outline-variant">
+<div class="max-w-7xl mx-auto px-gutter py-lg flex flex-col md:flex-row justify-between items-center gap-lg">
+<div class="flex flex-col items-center md:items-start gap-xs">
+<a href="/">
+    GEO-SAR
+</a>
+<p class="font-label-sm text-label-sm text-on-surface-variant">© 2024 GEO-SAR Intelligence Systems. Mission Critical Precision.</p>
+</div>
+<div class="flex gap-md">
+<a class="font-label-sm text-label-sm text-on-surface-variant hover:text-secondary transition-opacity duration-300" href="#">Privacy Policy</a>
+<a class="font-label-sm text-label-sm text-on-surface-variant hover:text-secondary transition-opacity duration-300" href="#">Terms of Service</a>
+<a class="font-label-sm text-label-sm text-on-surface-variant hover:text-secondary transition-opacity duration-300" href="#">Security Architecture</a>
+<a class="font-label-sm text-label-sm text-on-surface-variant hover:text-secondary transition-opacity duration-300" href="#">API Docs</a>
+</div>
+</div>
+</footer>
+<script>
+        // Micro-interaction for hover states and subtle parallax
+        document.addEventListener('mousemove', (e) => {
+            const panels = document.querySelectorAll('.glass-panel');
+            const mouseX = e.clientX / window.innerWidth;
+            const mouseY = e.clientY / window.innerHeight;
 
-<body>
+            panels.forEach(panel => {
+                const rect = panel.getBoundingClientRect();
+                const centerX = rect.left + rect.width / 2;
+                const centerY = rect.top + rect.height / 2;
+                
+                const deltaX = (e.clientX - centerX) / 100;
+                const deltaY = (e.clientY - centerY) / 100;
 
-    <h1>SAR Flood Detection System</h1>
+                panel.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
+            });
+        });
 
-    <p>Upload a SAR image for flood prediction.</p>
-
-    <form method="POST" enctype="multipart/form-data">
-
-        <input
-            type="file"
-            name="image"
-            accept=".png,.jpg,.jpeg,.tif,.tiff"
-            required>
-
-        <br><br>
-
-        <button type="submit">
-            Upload & Predict
-        </button>
-
-    </form>
-
-</body>
-
-</html>
+        // Initialize simple counter animation logic (placeholder for actual implementation)
+        console.log('GEO-SAR Interface Initialized. Status: Nominal.');
+    </script>
+</body></html>

@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>GEO-SAR | Interactive Flood Map Viewer</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-panel {
+            background: rgba(19, 27, 46, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .map-inset-shadow {
+            box-shadow: inset 0 0 100px rgba(0, 0, 0, 0.5);
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #3b494b; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #00dbe9; }
+        
+        .timeline-track {
+            background: linear-gradient(90deg, transparent 0%, rgba(0, 219, 233, 0.2) 50%, transparent 100%);
+        }
+    </style>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                "surface-container-lowest": "#060e20",
+                "surface": "#0b1326",
+                "inverse-on-surface": "#283044",
+                "surface-container-high": "#222a3d",
+                "on-tertiary-container": "#9d4300",
+                "on-error": "#690005",
+                "tertiary-fixed": "#ffdbca",
+                "on-secondary-fixed": "#00201c",
+                "on-primary-fixed-variant": "#004f54",
+                "surface-container-highest": "#2d3449",
+                "outline-variant": "#3b494b",
+                "on-tertiary-fixed": "#341100",
+                "error": "#ffb4ab",
+                "on-background": "#dae2fd",
+                "error-container": "#93000a",
+                "secondary": "#4fdbc8",
+                "on-tertiary-fixed-variant": "#783200",
+                "on-secondary-fixed-variant": "#005048",
+                "primary-container": "#00f0ff",
+                "surface-tint": "#00dbe9",
+                "inverse-surface": "#dae2fd",
+                "tertiary-fixed-dim": "#ffb690",
+                "inverse-primary": "#006970",
+                "on-error-container": "#ffdad6",
+                "on-primary-container": "#006970",
+                "surface-container": "#171f33",
+                "outline": "#849495",
+                "on-secondary": "#003731",
+                "on-surface": "#dae2fd",
+                "on-primary": "#00363a",
+                "tertiary-container": "#ffcfb8",
+                "surface-container-low": "#131b2e",
+                "primary-fixed-dim": "#00dbe9",
+                "on-tertiary": "#552100",
+                "secondary-container": "#04b4a2",
+                "background": "#0b1326",
+                "primary": "#dbfcff",
+                "secondary-fixed-dim": "#4fdbc8",
+                "on-secondary-container": "#003f38",
+                "surface-dim": "#0b1326",
+                "on-surface-variant": "#b9cacb",
+                "tertiary": "#fff3ef",
+                "surface-bright": "#31394d",
+                "on-primary-fixed": "#002022",
+                "surface-variant": "#2d3449",
+                "secondary-fixed": "#71f8e4",
+                "primary-fixed": "#7df4ff"
+            },
+            "borderRadius": {
+                "DEFAULT": "0.125rem",
+                "lg": "0.25rem",
+                "xl": "0.5rem",
+                "full": "0.75rem"
+            },
+            "spacing": {
+                "gutter": "16px",
+                "base": "4px",
+                "xl": "64px",
+                "xs": "8px",
+                "sidebar-width": "320px",
+                "sm": "16px",
+                "md": "24px",
+                "lg": "40px"
+            },
+            "fontFamily": {
+                "headline-lg": ["Hanken Grotesk"],
+                "body-md": ["Hanken Grotesk"],
+                "label-sm": ["JetBrains Mono"],
+                "label-md": ["JetBrains Mono"],
+                "headline-md": ["Hanken Grotesk"],
+                "code-data": ["JetBrains Mono"],
+                "headline-lg-mobile": ["Hanken Grotesk"],
+                "body-lg": ["Hanken Grotesk"]
+            },
+            "fontSize": {
+                "headline-lg": ["40px", {"lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "400"}],
+                "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                "code-data": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+                "headline-lg-mobile": ["30px", {"lineHeight": "36px", "fontWeight": "700"}],
+                "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}]
+            }
+          },
+        },
+      }
+    </script>
+</head>
+<body class="bg-background text-on-surface font-body-md overflow-hidden selection:bg-primary-container selection:text-on-primary-container">
+<!-- TopNavBar -->
+<header class="fixed top-0 w-full z-50 bg-surface-container-high shadow-sm border-b border-outline-variant flex justify-between items-center px-gutter h-16">
+<div class="flex items-center gap-xl">
+<h1 class="font-headline-lg text-headline-lg text-primary-fixed tracking-tight">GEO-SAR</h1>
+<nav class="hidden md:flex items-center gap-md">
+<a href="/dashboard">Dashboard</a>
+<a href="/upload">Imagery</a>
+<a href="/map">Flood Map</a>
+</nav>
+</div>
+<div class="flex items-center gap-sm">
+<button class="bg-primary-container text-on-primary-container px-md py-xs rounded-lg font-label-md text-label-md hover:opacity-90 active:opacity-80 transition-all uppercase tracking-wider">Deploy Analysis</button>
+<div class="flex items-center gap-xs ml-base">
+<button class="p-xs text-on-surface-variant hover:text-primary transition-colors"><span class="material-symbols-outlined">notifications</span></button>
+<button class="p-xs text-on-surface-variant hover:text-primary transition-colors"><span class="material-symbols-outlined">settings</span></button>
+<div class="w-8 h-8 rounded-full overflow-hidden border border-outline-variant">
+<img class="w-full h-full object-cover" data-alt="A professional analyst profile portrait in high-key cinematic lighting, styled for a corporate intelligence dashboard. The background is a dark tech environment with subtle blue and teal glowing UI elements. The person wears smart casual attire, reflecting competence and high-stakes decision making." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAXaoi-gd6RBsT3xu7TPPYCPgg3JSgO26caih7urUFfAdEehum0HN2TzDV_RaOXtV3m7P-zwTH4MggiPw5PsWIhxphGywla7lPXskI5StX99w_tAgs7qtQjbn4mPWxMLBA2Tty3h3cwoVPwC1g0NaX6p-5WLgxcRHMfxEgHj9z0Q4thbhB53aSB43YcRqnnGNaoKmNnSuL0Ov3fu_UigWkUrOAAa-_uc2HEvEwH6xWXgViWW9rmfFgYX0ar6Fnd9sRw0dRHqFo0GkY"/>
+</div>
+</div>
+</div>
+</header>
+<!-- SideNavBar -->
+<aside class="fixed left-0 top-16 h-[calc(100vh-64px)] w-sidebar-width bg-surface-container-low border-r border-outline-variant z-40 hidden md:flex flex-col py-md px-sm">
+<div class="flex items-center gap-sm mb-lg px-xs">
+<div class="w-10 h-10 rounded-lg bg-secondary-container flex items-center justify-center text-on-secondary-container">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">satellite_alt</span>
+</div>
+<div>
+<h2 class="font-headline-md text-headline-md text-primary leading-tight">Mission Control</h2>
+<p class="font-label-sm text-label-sm text-on-surface-variant">SAR-7 Active</p>
+</div>
+</div>
+<nav class="flex-1 space-y-xs overflow-y-auto">
+<div class="group flex items-center gap-sm px-sm py-md rounded-lg text-on-surface-variant hover:bg-surface-variant/50 transition-all cursor-pointer active:scale-95">
+<span class="material-symbols-outlined">live_tv</span>
+<span class="font-label-md text-label-md">Live Feed</span>
+</div>
+<div class="group flex items-center gap-sm px-sm py-md rounded-lg bg-secondary-container text-on-secondary-container border-l-4 border-secondary font-bold cursor-pointer active:scale-95">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">layers</span>
+<span class="font-label-md text-label-md">SAR Library</span>
+</div>
+<div class="group flex items-center gap-sm px-sm py-md rounded-lg text-on-surface-variant hover:bg-surface-variant/50 transition-all cursor-pointer active:scale-95">
+<span class="material-symbols-outlined">warning</span>
+<span class="font-label-md text-label-md">Threat Zones</span>
+</div>
+<div class="group flex items-center gap-sm px-sm py-md rounded-lg text-on-surface-variant hover:bg-surface-variant/50 transition-all cursor-pointer active:scale-95">
+<span class="material-symbols-outlined">history</span>
+<span class="font-label-md text-label-md">Historical</span>
+</div>
+<div class="group flex items-center gap-sm px-sm py-md rounded-lg text-on-surface-variant hover:bg-surface-variant/50 transition-all cursor-pointer active:scale-95">
+<span class="material-symbols-outlined">group</span>
+<span class="font-label-md text-label-md">Team</span>
+</div>
+<div class="pt-lg pb-sm">
+<p class="font-label-sm text-label-sm text-outline px-sm uppercase tracking-widest mb-xs">Layer Control</p>
+<div class="space-y-sm px-sm">
+<label class="flex items-center justify-between cursor-pointer group">
+<span class="font-label-md text-label-md text-on-surface-variant group-hover:text-primary transition-colors">Flood Extent</span>
+<input checked="" class="form-checkbox bg-surface-container border-outline rounded text-secondary focus:ring-0 focus:ring-offset-0" type="checkbox"/>
+</label>
+<label class="flex items-center justify-between cursor-pointer group">
+<span class="font-label-md text-label-md text-on-surface-variant group-hover:text-primary transition-colors">Prob. Heatmap</span>
+<input class="form-checkbox bg-surface-container border-outline rounded text-secondary focus:ring-0 focus:ring-offset-0" type="checkbox"/>
+</label>
+<label class="flex items-center justify-between cursor-pointer group">
+<span class="font-label-md text-label-md text-on-surface-variant group-hover:text-primary transition-colors">Perm. Water</span>
+<input checked="" class="form-checkbox bg-surface-container border-outline rounded text-secondary focus:ring-0 focus:ring-offset-0" type="checkbox"/>
+</label>
+</div>
+</div>
+</nav>
+<div class="mt-auto space-y-xs pt-md border-t border-outline-variant">
+<div class="flex items-center gap-sm px-sm py-sm text-on-surface-variant hover:bg-surface-container-highest transition-all cursor-pointer">
+<span class="material-symbols-outlined">help</span>
+<span class="font-label-md text-label-md">Help</span>
+</div>
+<div class="flex items-center gap-sm px-sm py-sm text-on-surface-variant hover:bg-surface-container-highest transition-all cursor-pointer">
+<span class="material-symbols-outlined">check_circle</span>
+<span class="font-label-md text-label-md">Status</span>
+</div>
+</div>
+</aside>
+<!-- Main Content: Viewport-Filling Map -->
+<main class="fixed left-0 md:left-sidebar-width right-0 top-16 bottom-0 overflow-hidden bg-surface-container-lowest">
+<!-- Interactive Map Canvas -->
+<div class="absolute inset-0 z-0 map-inset-shadow bg-cover bg-center transition-all duration-700" data-alt="A high-fidelity satellite view of a river delta region undergoing severe flooding. The image is styled with a dark, cinematic technical aesthetic, featuring deep navy blue permanent water, electric teal flood extent overlays, and subtle grid lines. The lighting is moody and dramatic, highlighting topographic details and the contrast between dry land and water-logged areas." data-location="Mississippi River Delta" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDepJmyjeAdlRGcr17fghWFe_GxOGX_6IXT2heZVdwJpvOU8dKexeIF1iIuC_UhuXiwHBhuwT-Bx-yf2oHC7JaeYDGBs3rJomr45dDA8k4hWHxc_xoaE6edSwzHFruef2H7yy6Br36uru9XwXw6lG4KSznT80sMMY4w7ISSBghcur7uC0oozsuNzs9nR0IZ6pgytfcAEuQgGF80cvfTyqtPAPuYyaE6YuqD23ol0Rj9v24JQW09AywsEgtb5jJgCLVj_VwIuJANSoI')">
+<!-- Overlay Masking Effect (Subtle glow) -->
+<div class="absolute inset-0 bg-primary/5 pointer-events-none mix-blend-overlay"></div>
+</div>
+<!-- Floating Map Controls -->
+<div class="absolute top-sm right-sm flex flex-col gap-xs z-20">
+<div class="glass-panel p-xs rounded-lg flex flex-col gap-xs">
+<button class="w-10 h-10 flex items-center justify-center text-on-surface-variant hover:text-primary transition-colors"><span class="material-symbols-outlined">add</span></button>
+<div class="h-px bg-outline-variant w-full"></div>
+<button class="w-10 h-10 flex items-center justify-center text-on-surface-variant hover:text-primary transition-colors"><span class="material-symbols-outlined">remove</span></button>
+</div>
+<div class="glass-panel p-xs rounded-lg">
+<button class="w-10 h-10 flex items-center justify-center text-on-surface-variant hover:text-primary transition-colors"><span class="material-symbols-outlined">my_location</span></button>
+</div>
+<div class="glass-panel p-xs rounded-lg">
+<button class="w-10 h-10 flex items-center justify-center text-on-surface-variant hover:text-primary transition-colors"><span class="material-symbols-outlined">3d_rotation</span></button>
+</div>
+</div>
+<!-- Analysis HUD Overlay -->
+<div class="absolute top-sm left-sm w-80 z-20 space-y-sm">
+<div class="glass-panel p-md rounded-xl">
+<div class="flex justify-between items-start mb-sm">
+<h3 class="font-headline-md text-headline-md text-primary">Sector 7G-Delta</h3>
+<span class="px-xs py-1 bg-error-container text-on-error-container font-label-sm text-label-sm rounded uppercase">High Alert</span>
+</div>
+<div class="space-y-md">
+<div class="flex justify-between items-center">
+<span class="text-on-surface-variant font-label-md">Water Level</span>
+<span class="font-code-data text-secondary text-lg">+2.45m</span>
+</div>
+<div class="flex justify-between items-center">
+<span class="text-on-surface-variant font-label-md">Precipitation</span>
+<span class="font-code-data text-primary text-lg">14.2mm/h</span>
+</div>
+<div class="w-full h-1 bg-surface-container-highest rounded-full overflow-hidden">
+<div class="w-[78%] h-full bg-secondary shadow-[0_0_8px_rgba(79,219,200,0.5)]"></div>
+</div>
+<p class="text-on-surface-variant font-label-sm leading-relaxed">Flood probability index reached 78% threshold in lower delta areas. Immediate monitoring required for infrastructure integrity.</p>
+</div>
+</div>
+<!-- Detailed Area Legend -->
+<div class="glass-panel p-md rounded-xl">
+<p class="font-label-sm text-outline uppercase tracking-widest mb-sm">Visual Legend</p>
+<div class="space-y-sm">
+<div class="flex items-center gap-sm">
+<div class="w-3 h-3 bg-secondary rounded-full"></div>
+<span class="text-on-surface font-label-md">Permanent Water</span>
+</div>
+<div class="flex items-center gap-sm">
+<div class="w-3 h-3 bg-primary-container rounded-full animate-pulse"></div>
+<span class="text-on-surface font-label-md">SAR Flood Detection</span>
+</div>
+<div class="flex items-center gap-sm">
+<div class="w-3 h-3 bg-error rounded-full"></div>
+<span class="text-on-surface font-label-md">Critical Infrastructure</span>
+</div>
+<div class="flex items-center gap-sm opacity-50">
+<div class="w-3 h-3 border border-outline rounded-full"></div>
+<span class="text-on-surface font-label-md">Administrative Bounds</span>
+</div>
+</div>
+</div>
+</div>
+<!-- The Timeline Slider (Bottom Overlay) -->
+<div class="absolute bottom-gutter left-gutter right-gutter z-30">
+<div class="glass-panel p-md rounded-xl max-w-5xl mx-auto">
+<div class="flex justify-between items-center mb-md">
+<div class="flex items-center gap-sm">
+<span class="material-symbols-outlined text-secondary">history</span>
+<span class="font-headline-md text-headline-md">Historical SAR Comparison</span>
+</div>
+<div class="flex gap-xs">
+<button class="px-sm py-1 bg-surface-container-highest border border-outline-variant rounded font-label-sm hover:text-primary">L-BAND</button>
+<button class="px-sm py-1 bg-surface-container-highest border border-outline-variant rounded font-label-sm text-primary">C-BAND</button>
+<button class="px-sm py-1 bg-surface-container-highest border border-outline-variant rounded font-label-sm hover:text-primary">X-BAND</button>
+</div>
+</div>
+<div class="relative px-md py-lg">
+<!-- Intensity Sparkline -->
+<div class="absolute top-0 left-md right-md h-12 opacity-30 pointer-events-none">
+<svg class="w-full h-full preserve-3d" preserveaspectratio="none" viewbox="0 0 1000 100">
+<path d="M0 80 Q 50 20 100 70 T 200 40 T 300 90 T 400 30 T 500 60 T 600 10 T 700 85 T 800 45 T 900 75 T 1000 20" fill="none" stroke="#ffb690" stroke-width="2"></path>
+</svg>
+</div>
+<div class="timeline-track h-2 w-full rounded-full relative">
+<!-- Markers -->
+<div class="absolute top-1/2 left-0 -translate-y-1/2 w-4 h-4 rounded-full bg-surface border-2 border-outline z-10"></div>
+<div class="absolute top-1/2 left-[25%] -translate-y-1/2 w-4 h-4 rounded-full bg-surface border-2 border-outline z-10"></div>
+<div class="absolute top-1/2 left-[50%] -translate-y-1/2 w-4 h-4 rounded-full bg-surface border-2 border-outline z-10"></div>
+<div class="absolute top-1/2 left-[75%] -translate-y-1/2 w-4 h-4 rounded-full bg-surface border-2 border-outline z-10"></div>
+<div class="absolute top-1/2 right-0 -translate-y-1/2 w-6 h-6 rounded-full bg-primary border-4 border-surface z-20 shadow-[0_0_15px_rgba(0,219,233,0.6)] cursor-pointer"></div>
+</div>
+<div class="flex justify-between mt-sm">
+<span class="font-code-data text-label-sm text-outline">OCT 12</span>
+<span class="font-code-data text-label-sm text-outline">OCT 19</span>
+<span class="font-code-data text-label-sm text-outline">OCT 26</span>
+<span class="font-code-data text-label-sm text-outline">NOV 02</span>
+<span class="font-code-data text-label-sm text-primary font-bold">NOV 09 [LIVE]</span>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Footer (Standard but suppressed for focused map unless small) -->
+<footer class="fixed bottom-0 w-full z-50 bg-surface-container-lowest hidden border-t border-outline-variant">
+<div class="flex flex-col md:flex-row justify-between items-center px-gutter py-lg max-w-7xl mx-auto">
+<p class="font-label-sm text-label-sm text-on-surface-variant">© 2024 GEO-SAR Intelligence Systems. Mission Critical Precision.</p>
+<div class="flex gap-md mt-sm md:mt-0">
+<a class="text-on-surface-variant hover:text-secondary transition-opacity duration-300 font-label-sm text-label-sm" href="#">Privacy Policy</a>
+<a class="text-on-surface-variant hover:text-secondary transition-opacity duration-300 font-label-sm text-label-sm" href="#">Terms of Service</a>
+<a class="text-on-surface-variant hover:text-secondary transition-opacity duration-300 font-label-sm text-label-sm" href="#">Security Architecture</a>
+<a class="text-on-surface-variant hover:text-secondary transition-opacity duration-300 font-label-sm text-label-sm" href="#">API Docs</a>
+</div>
+</div>
+</footer>
+<script>
+        // Micro-interactions for the interactive map and slider
+        document.addEventListener('DOMContentLoaded', () => {
+            const mapControls = document.querySelectorAll('.glass-panel button');
+            mapControls.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    this.classList.add('scale-90');
+                    setTimeout(() => this.classList.remove('scale-90'), 100);
+                });
+            });
+
+            // Simulated timeline drag effect
+            const thumb = document.querySelector('.timeline-track div:last-child');
+            let isDragging = false;
+
+            thumb.addEventListener('mousedown', () => isDragging = true);
+            window.addEventListener('mouseup', () => isDragging = false);
+
+            window.addEventListener('mousemove', (e) => {
+                if (!isDragging) return;
+                const track = document.querySelector('.timeline-track');
+                const rect = track.getBoundingClientRect();
+                let x = e.clientX - rect.left;
+                let percent = (x / rect.width) * 100;
+                percent = Math.max(0, Math.min(100, percent));
+                thumb.style.left = `calc(${percent}% - 12px)`;
+                
+                // Visual feedback on map opacity or something similar could be added here
+            });
+        });
+    </script>
+</body></html>
