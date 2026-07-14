@@ -199,14 +199,42 @@
 <!-- Bento Grid Interface -->
 <div class="grid grid-cols-12 gap-md">
 <!-- Central Dropzone (Primary) -->
-<div class="col-span-12 lg:col-span-8 glass-panel rounded-xl p-lg flex flex-col items-center justify-center min-h-[400px] border-dashed border-2 border-outline-variant hover:border-primary-container transition-all group" id="dropzone">
+<form
+    action="{{ url_for('predict_route') }}"
+    method="POST"
+    enctype="multipart/form-data">
+
+<div
+class="col-span-12 lg:col-span-8 glass-panel rounded-xl p-lg flex flex-col items-center justify-center min-h-[400px] border-dashed border-2 border-outline-variant hover:border-primary-container transition-all group"
+id="dropzone">
 <div class="w-20 h-20 rounded-full bg-surface-container-highest flex items-center justify-center mb-md group-hover:scale-110 transition-transform">
 <span class="material-symbols-outlined text-primary-fixed-dim text-4xl">cloud_upload</span>
 </div>
 <h2 class="font-headline-md text-headline-md text-on-surface mb-xs">Drop GeoTIFF or HDF5 files</h2>
+<input
+    type="file"
+    id="imageInput"
+    name="image"
+    accept=".png,.jpg,.jpeg,.tif,.tiff"
+    hidden
+    required>
 <p class="font-body-md text-body-md text-on-surface-variant mb-lg text-center max-w-md">Maximum single file size: 4GB. Multi-pol SAR bundles supported (Sentinel-1 / TerraSAR-X / ICEYE).</p>
 <div class="flex gap-md">
-<button class="bg-secondary-container text-on-secondary-container px-lg py-sm rounded font-label-md text-label-md hover:bg-secondary-fixed-dim transition-colors">Select Files</button>
+<button
+type="button"
+id="selectButton"
+class="bg-secondary-container text-on-secondary-container px-lg py-sm rounded font-label-md text-label-md hover:bg-secondary-fixed-dim transition-colors">
+
+Select SAR Image
+
+</button>
+<button
+type="submit"
+class="bg-primary-container text-on-primary-container px-lg py-sm rounded font-label-md text-label-md hover:brightness-110 transition-all">
+
+Run Flood Detection
+
+</button>
 <button class="bg-transparent border border-outline-variant text-on-surface px-lg py-sm rounded font-label-md text-label-md hover:bg-surface-variant transition-colors">Connect AWS S3</button>
 </div>
 <div class="mt-lg flex gap-sm opacity-50">
@@ -215,6 +243,8 @@
 <div class="px-xs py-base bg-surface-container rounded font-label-sm text-label-sm border border-outline-variant">.zip</div>
 </div>
 </div>
+</div>
+</form>
 <!-- Metadata Configuration (Sidebar in Canvas) -->
 <div class="col-span-12 lg:col-span-4 space-y-md">
 <div class="glass-panel rounded-xl p-md">
@@ -400,4 +430,38 @@
             });
         });
     </script>
+    <script>
+
+const selectButton = document.getElementById("selectButton");
+
+const imageInput = document.getElementById("imageInput");
+
+selectButton.onclick = () => {
+
+    imageInput.click();
+
+};
+
+imageInput.onchange = () => {
+
+    if(imageInput.files.length){
+
+        selectButton.innerText =
+            imageInput.files[0].name;
+
+    }
+
+};
+dropzone.addEventListener("drop", function(e){
+
+    e.preventDefault();
+
+    imageInput.files = e.dataTransfer.files;
+
+    selectButton.innerText =
+        e.dataTransfer.files[0].name;
+
+});
+
+</script>
 </body></html>

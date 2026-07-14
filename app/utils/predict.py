@@ -1,256 +1,109 @@
-import os
 import cv2
 import numpy as np
 import tensorflow as tf
-from tensorflow.keras import layers
+import os
 
+# --------------------------------------------------
+# Load models only once
+# --------------------------------------------------
 
-# ==========================================================
-# Custom Position Embedding Layer
-# ==========================================================
-
-@tf.keras.utils.register_keras_serializable()
-class PositionEmbedding(tf.keras.layers.Layer):
-
-    def __init__(self, sequence_length, embed_dim, **kwargs):
-        super().__init__(**kwargs)
-
-        self.sequence_length = sequence_length
-        self.embed_dim = embed_dim
-
-        self.position_embedding = layers.Embedding(
-            input_dim=sequence_length,
-            output_dim=embed_dim
-        )
-
-    def call(self, inputs):
-
-        positions = tf.range(
-            start=0,
-            limit=tf.shape(inputs)[1],
-            delta=1
-        )
-
-        embedded_positions = self.position_embedding(positions)
-
-        return inputs + embedded_positions
-
-    def get_config(self):
-
-        config = super().get_config()
-
-        config.update({
-            "sequence_length": self.sequence_length,
-            "embed_dim": self.embed_dim
-        })
-
-        return config
-
-
-# ==========================================================
-# Paths
-# ==========================================================
-
-BASE_DIR = os.path.dirname(__file__)
-
-MODEL_PATH = os.path.join(
-    BASE_DIR,
+MODEL_DIR = os.path.join(
+    os.path.dirname(__file__),
     "..",
-    "model",
-    "simple_transformer_final.keras"
+    "model"
 )
 
-ENCODER_PATH = os.path.join(
-    BASE_DIR,
-    "..",
-    "model",
-    "encoder.keras"
+encoder = tf.keras.models.load_model(
+    os.path.join(MODEL_DIR, "encoder.keras"),
+    compile=False
 )
 
+transformer = tf.keras.models.load_model(
+    os.path.join(MODEL_DIR, "simple_transformer_final.keras"),
+    compile=False
+)
 
-# ==========================================================
-# Check files
-# ==========================================================
-
-print("=" * 60)
-print("Transformer:", MODEL_PATH)
-print("Encoder:", ENCODER_PATH)
-
-print("Transformer exists:", os.path.exists(MODEL_PATH))
-print("Encoder exists:", os.path.exists(ENCODER_PATH))
-print("=" * 60)
-
-
-# ==========================================================
-# Load Encoder
-# ==========================================================
-
-try:
-
-    encoder = tf.keras.models.load_model(
-        ENCODER_PATH
-    )
-
-    print("✅ Encoder loaded successfully!")
-
-except Exception as e:
-
-    print("❌ Error loading encoder")
-    print(e)
-
-    encoder = None
-
-
-# ==========================================================
-# Load Transformer
-# ==========================================================
-
-try:
-
-    model = tf.keras.models.load_model(
-
-        MODEL_PATH,
-
-        custom_objects={
-            "PositionEmbedding": PositionEmbedding
-        }
-
-    )
-
-    print("✅ Transformer model loaded successfully!")
-
-except Exception as e:
-
-    print("❌ Error loading Transformer")
-    print(e)
-
-    model = None
-
-
-# ==========================================================
-# Image Preprocessing
-# ==========================================================
+# --------------------------------------------------
+# Constants
+# --------------------------------------------------
 
 IMG_SIZE = 128
 
+NUM_TOKENS = 32 * 32
+
+FEATURE_DIM = 16
+
+# --------------------------------------------------
+# Image Preprocessing
+# --------------------------------------------------
 
 def preprocess_image(image_path):
 
-    image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
+    image = cv2.imread(
+        image_path,
+        cv2.IMREAD_GRAYSCALE
+    )
 
-    if image is None:
-        raise ValueError("Unable to read image.")
+    image = cv2.resize(
+        image,
+        (IMG_SIZE, IMG_SIZE)
+    )
 
-    image = cv2.resize(image, (IMG_SIZE, IMG_SIZE))
+    image = image.astype(np.float32)
 
-    image = image.astype(np.float32) / 255.0
+    image /= 255.0
 
-    image = np.expand_dims(image, axis=-1)
+    image = np.expand_dims(
+        image,
+        axis=-1
+    )
 
-    image = np.expand_dims(image, axis=0)
+    image = np.expand_dims(
+        image,
+        axis=0
+    )
+
+    image = np.nan_to_num(image)
 
     return image
 
-
-# ==========================================================
+# --------------------------------------------------
 # Prediction
-# ==========================================================
+# --------------------------------------------------
 
-def predict_flood(image_path):
-
-    if encoder is None:
-        raise ValueError("Encoder model not loaded.")
-
-    if model is None:
-        raise ValueError("Transformer model not loaded.")
-
-    # ------------------------------------
-    # Preprocess image
-    # ------------------------------------
+def predict(image_path):
 
     image = preprocess_image(image_path)
 
-    print("Input Image Shape :", image.shape)
-
-    # ------------------------------------
-    # Encoder
-    # ------------------------------------
-
-    latent_features = encoder.predict(
+    features = encoder.predict(
         image,
         verbose=0
     )
 
-    print("Encoder Output Shape :", latent_features.shape)
-
-    # Expected:
-    # (1,32,32,16)
-
-    # ------------------------------------
-    # Convert to transformer tokens
-    # ------------------------------------
-
-    tokens = latent_features.reshape(
-        latent_features.shape[0],
-        32 * 32,
-        16
+    tokens = features.reshape(
+        features.shape[0],
+        NUM_TOKENS,
+        FEATURE_DIM
     )
 
-    print("Transformer Input Shape :", tokens.shape)
-
-    # Expected:
-    # (1,1024,16)
-
-    # ------------------------------------
-    # Transformer Prediction
-    # ------------------------------------
-
-    prediction = model.predict(
+    probability = transformer.predict(
         tokens,
         verbose=0
+    )[0][0]
+
+    prediction = "Flood"
+
+    if probability < 0.5:
+        prediction = "No Flood"
+
+    confidence = probability
+
+    if probability < 0.5:
+        confidence = 1 - probability
+
+    confidence = round(
+        float(confidence) * 100,
+        2
     )
 
-    probability = float(prediction[0][0])
-
-    if probability >= 0.5:
-        label = "Flood"
-    else:
-        label = "Non-Flood"
-
-    confidence = probability if probability >= 0.5 else (1 - probability)
-
-    return {
-
-        "label": label,
-
-        "confidence": round(confidence * 100, 2)
-
-    }
-
-
-# ==========================================================
-# Testing
-# ==========================================================
-
-if __name__ == "__main__":
-
-    test_image = os.path.join(
-        BASE_DIR,
-        "..",
-        "uploads",
-        "test.png"
-    )
-
-    if os.path.exists(test_image):
-
-        result = predict_flood(test_image)
-
-        print("\n==============================")
-        print("Prediction :", result["label"])
-        print("Confidence :", result["confidence"], "%")
-        print("==============================")
-
-    else:
-
-        print("Place a test image inside:")
-        print("app/uploads/test.png")
+    return prediction, confidence

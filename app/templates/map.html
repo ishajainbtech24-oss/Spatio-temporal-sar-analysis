@@ -3,10 +3,9 @@
 <html class="dark" lang="en"><head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>GEO-SAR | Interactive Flood Map Viewer</title>
+<title>GEO-SAR | AI Flood Detection Result</title>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
 <style>
         .material-symbols-outlined {
@@ -18,17 +17,26 @@
             -webkit-backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
-        .map-inset-shadow {
-            box-shadow: inset 0 0 100px rgba(0, 0, 0, 0.5);
-        }
         /* Custom Scrollbar */
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #3b494b; border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: #00dbe9; }
-        
-        .timeline-track {
-            background: linear-gradient(90deg, transparent 0%, rgba(0, 219, 233, 0.2) 50%, transparent 100%);
+
+        .scanline {
+            width: 100%;
+            height: 2px;
+            background: #00dbe9;
+            opacity: 0.5;
+            position: absolute;
+            top: 0;
+            left: 0;
+            animation: scan 3s linear infinite;
+            box-shadow: 0 0 15px #00dbe9;
+        }
+        @keyframes scan {
+            0% { top: 0; }
+            100% { top: 100%; }
         }
     </style>
 <script id="tailwind-config">
@@ -135,15 +143,16 @@
 <a href="/dashboard">Dashboard</a>
 <a href="/upload">Imagery</a>
 <a href="/map">Flood Map</a>
+<a class="text-primary border-b-2 border-primary pb-1 font-label-md text-label-md" href="#">Results</a>
 </nav>
 </div>
 <div class="flex items-center gap-sm">
-<button class="bg-primary-container text-on-primary-container px-md py-xs rounded-lg font-label-md text-label-md hover:opacity-90 active:opacity-80 transition-all uppercase tracking-wider">Deploy Analysis</button>
+<button class="bg-primary-container text-on-primary-container px-md py-xs rounded-lg font-label-md text-label-md hover:opacity-90 active:opacity-80 transition-all uppercase tracking-wider">Download Report</button>
 <div class="flex items-center gap-xs ml-base">
 <button class="p-xs text-on-surface-variant hover:text-primary transition-colors"><span class="material-symbols-outlined">notifications</span></button>
 <button class="p-xs text-on-surface-variant hover:text-primary transition-colors"><span class="material-symbols-outlined">settings</span></button>
 <div class="w-8 h-8 rounded-full overflow-hidden border border-outline-variant">
-<img class="w-full h-full object-cover" data-alt="A professional analyst profile portrait in high-key cinematic lighting, styled for a corporate intelligence dashboard. The background is a dark tech environment with subtle blue and teal glowing UI elements. The person wears smart casual attire, reflecting competence and high-stakes decision making." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAXaoi-gd6RBsT3xu7TPPYCPgg3JSgO26caih7urUFfAdEehum0HN2TzDV_RaOXtV3m7P-zwTH4MggiPw5PsWIhxphGywla7lPXskI5StX99w_tAgs7qtQjbn4mPWxMLBA2Tty3h3cwoVPwC1g0NaX6p-5WLgxcRHMfxEgHj9z0Q4thbhB53aSB43YcRqnnGNaoKmNnSuL0Ov3fu_UigWkUrOAAa-_uc2HEvEwH6xWXgViWW9rmfFgYX0ar6Fnd9sRw0dRHqFo0GkY"/>
+<img alt="Profile" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAXaoi-gd6RBsT3xu7TPPYCPgg3JSgO26caih7urUFfAdEehum0HN2TzDV_RaOXtV3m7P-zwTH4MggiPw5PsWIhxphGywla7lPXskI5StX99w_tAgs7qtQjbn4mPWxMLBA2Tty3h3cwoVPwC1g0NaX6p-5WLgxcRHMfxEgHj9z0Q4thbhB53aSB43YcRqnnGNaoKmNnSuL0Ov3fu_UigWkUrOAAa-_uc2HEvEwH6xWXgViWW9rmfFgYX0ar6Fnd9sRw0dRHqFo0GkY"/>
 </div>
 </div>
 </div>
@@ -160,25 +169,33 @@
 </div>
 </div>
 <nav class="flex-1 space-y-xs overflow-y-auto">
-<div class="group flex items-center gap-sm px-sm py-md rounded-lg text-on-surface-variant hover:bg-surface-variant/50 transition-all cursor-pointer active:scale-95">
-<span class="material-symbols-outlined">live_tv</span>
-<span class="font-label-md text-label-md">Live Feed</span>
+<div class="group flex items-center gap-sm px-sm py-md rounded-lg text-on-surface-variant hover:bg-surface-variant/50 transition-all cursor-pointer">
+<span class="material-symbols-outlined">Dashboard</span>
+<span class="font-label-md text-label-md">Upload SAR</span>
 </div>
-<div class="group flex items-center gap-sm px-sm py-md rounded-lg bg-secondary-container text-on-secondary-container border-l-4 border-secondary font-bold cursor-pointer active:scale-95">
+<div class="group flex items-center gap-sm px-sm py-md rounded-lg bg-secondary-container text-on-secondary-container border-l-4 border-secondary font-bold cursor-pointer">
 <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">layers</span>
 <span class="font-label-md text-label-md">SAR Library</span>
 </div>
-<div class="group flex items-center gap-sm px-sm py-md rounded-lg text-on-surface-variant hover:bg-surface-variant/50 transition-all cursor-pointer active:scale-95">
-<span class="material-symbols-outlined">warning</span>
-<span class="font-label-md text-label-md">Threat Zones</span>
+<div class="group flex items-center gap-sm px-sm py-md rounded-lg text-on-surface-variant hover:bg-surface-variant/50 transition-all cursor-pointer">
+<span class="material-symbols-outlined">{% if prediction == "Flood" %}
+
+warning
+
+{% else %}
+
+check_circle
+
+{% endif %}</span>
+<span class="font-label-md text-label-md">Results</span>
 </div>
-<div class="group flex items-center gap-sm px-sm py-md rounded-lg text-on-surface-variant hover:bg-surface-variant/50 transition-all cursor-pointer active:scale-95">
+<div class="group flex items-center gap-sm px-sm py-md rounded-lg text-on-surface-variant hover:bg-surface-variant/50 transition-all cursor-pointer">
 <span class="material-symbols-outlined">history</span>
-<span class="font-label-md text-label-md">Historical</span>
+<span class="font-label-md text-label-md">Project info</span>
 </div>
-<div class="group flex items-center gap-sm px-sm py-md rounded-lg text-on-surface-variant hover:bg-surface-variant/50 transition-all cursor-pointer active:scale-95">
+<div class="group flex items-center gap-sm px-sm py-md rounded-lg text-on-surface-variant hover:bg-surface-variant/50 transition-all cursor-pointer">
 <span class="material-symbols-outlined">group</span>
-<span class="font-label-md text-label-md">Team</span>
+<span class="font-label-md text-label-md">Help</span>
 </div>
 <div class="pt-lg pb-sm">
 <p class="font-label-sm text-label-sm text-outline px-sm uppercase tracking-widest mb-xs">Layer Control</p>
@@ -209,153 +226,170 @@
 </div>
 </div>
 </aside>
-<!-- Main Content: Viewport-Filling Map -->
-<main class="fixed left-0 md:left-sidebar-width right-0 top-16 bottom-0 overflow-hidden bg-surface-container-lowest">
-<!-- Interactive Map Canvas -->
-<div class="absolute inset-0 z-0 map-inset-shadow bg-cover bg-center transition-all duration-700" data-alt="A high-fidelity satellite view of a river delta region undergoing severe flooding. The image is styled with a dark, cinematic technical aesthetic, featuring deep navy blue permanent water, electric teal flood extent overlays, and subtle grid lines. The lighting is moody and dramatic, highlighting topographic details and the contrast between dry land and water-logged areas." data-location="Mississippi River Delta" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDepJmyjeAdlRGcr17fghWFe_GxOGX_6IXT2heZVdwJpvOU8dKexeIF1iIuC_UhuXiwHBhuwT-Bx-yf2oHC7JaeYDGBs3rJomr45dDA8k4hWHxc_xoaE6edSwzHFruef2H7yy6Br36uru9XwXw6lG4KSznT80sMMY4w7ISSBghcur7uC0oozsuNzs9nR0IZ6pgytfcAEuQgGF80cvfTyqtPAPuYyaE6YuqD23ol0Rj9v24JQW09AywsEgtb5jJgCLVj_VwIuJANSoI')">
-<!-- Overlay Masking Effect (Subtle glow) -->
-<div class="absolute inset-0 bg-primary/5 pointer-events-none mix-blend-overlay"></div>
-</div>
-<!-- Floating Map Controls -->
-<div class="absolute top-sm right-sm flex flex-col gap-xs z-20">
-<div class="glass-panel p-xs rounded-lg flex flex-col gap-xs">
-<button class="w-10 h-10 flex items-center justify-center text-on-surface-variant hover:text-primary transition-colors"><span class="material-symbols-outlined">add</span></button>
-<div class="h-px bg-outline-variant w-full"></div>
-<button class="w-10 h-10 flex items-center justify-center text-on-surface-variant hover:text-primary transition-colors"><span class="material-symbols-outlined">remove</span></button>
-</div>
-<div class="glass-panel p-xs rounded-lg">
-<button class="w-10 h-10 flex items-center justify-center text-on-surface-variant hover:text-primary transition-colors"><span class="material-symbols-outlined">my_location</span></button>
-</div>
-<div class="glass-panel p-xs rounded-lg">
-<button class="w-10 h-10 flex items-center justify-center text-on-surface-variant hover:text-primary transition-colors"><span class="material-symbols-outlined">3d_rotation</span></button>
-</div>
-</div>
-<!-- Analysis HUD Overlay -->
-<div class="absolute top-sm left-sm w-80 z-20 space-y-sm">
-<div class="glass-panel p-md rounded-xl">
-<div class="flex justify-between items-start mb-sm">
-<h3 class="font-headline-md text-headline-md text-primary">Sector 7G-Delta</h3>
-<span class="px-xs py-1 bg-error-container text-on-error-container font-label-sm text-label-sm rounded uppercase">High Alert</span>
-</div>
-<div class="space-y-md">
-<div class="flex justify-between items-center">
-<span class="text-on-surface-variant font-label-md">Water Level</span>
-<span class="font-code-data text-secondary text-lg">+2.45m</span>
-</div>
-<div class="flex justify-between items-center">
-<span class="text-on-surface-variant font-label-md">Precipitation</span>
-<span class="font-code-data text-primary text-lg">14.2mm/h</span>
-</div>
-<div class="w-full h-1 bg-surface-container-highest rounded-full overflow-hidden">
-<div class="w-[78%] h-full bg-secondary shadow-[0_0_8px_rgba(79,219,200,0.5)]"></div>
-</div>
-<p class="text-on-surface-variant font-label-sm leading-relaxed">Flood probability index reached 78% threshold in lower delta areas. Immediate monitoring required for infrastructure integrity.</p>
-</div>
-</div>
-<!-- Detailed Area Legend -->
-<div class="glass-panel p-md rounded-xl">
-<p class="font-label-sm text-outline uppercase tracking-widest mb-sm">Visual Legend</p>
-<div class="space-y-sm">
+<!-- Main Content -->
+<main class="fixed left-0 md:left-sidebar-width right-0 top-16 bottom-0 overflow-y-auto bg-surface-container-lowest p-md md:p-xl">
+<div class="max-w-6xl mx-auto space-y-lg">
+<!-- Page Title -->
 <div class="flex items-center gap-sm">
-<div class="w-3 h-3 bg-secondary rounded-full"></div>
-<span class="text-on-surface font-label-md">Permanent Water</span>
+<div class="w-1.5 h-8 bg-secondary"></div>
+<h2 class="font-headline-lg text-headline-lg text-on-surface">AI Flood Detection Result</h2>
 </div>
-<div class="flex items-center gap-sm">
-<div class="w-3 h-3 bg-primary-container rounded-full animate-pulse"></div>
-<span class="text-on-surface font-label-md">SAR Flood Detection</span>
+<!-- Comparison Section (Two Columns) -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-lg">
+<!-- Left Column: Uploaded SAR Image -->
+<div class="glass-panel rounded-xl overflow-hidden flex flex-col">
+<div class="px-md py-sm border-b border-outline-variant flex justify-between items-center bg-surface-container-high/50">
+<span class="font-label-md text-label-md text-primary uppercase tracking-wider">Uploaded SAR Image</span>
+<span class="font-code-data text-label-sm text-outline">{{ uploaded_image }}</span>
 </div>
-<div class="flex items-center gap-sm">
-<div class="w-3 h-3 bg-error rounded-full"></div>
-<span class="text-on-surface font-label-md">Critical Infrastructure</span>
-</div>
-<div class="flex items-center gap-sm opacity-50">
-<div class="w-3 h-3 border border-outline rounded-full"></div>
-<span class="text-on-surface font-label-md">Administrative Bounds</span>
-</div>
-</div>
-</div>
-</div>
-<!-- The Timeline Slider (Bottom Overlay) -->
-<div class="absolute bottom-gutter left-gutter right-gutter z-30">
-<div class="glass-panel p-md rounded-xl max-w-5xl mx-auto">
-<div class="flex justify-between items-center mb-md">
-<div class="flex items-center gap-sm">
-<span class="material-symbols-outlined text-secondary">history</span>
-<span class="font-headline-md text-headline-md">Historical SAR Comparison</span>
-</div>
-<div class="flex gap-xs">
-<button class="px-sm py-1 bg-surface-container-highest border border-outline-variant rounded font-label-sm hover:text-primary">L-BAND</button>
-<button class="px-sm py-1 bg-surface-container-highest border border-outline-variant rounded font-label-sm text-primary">C-BAND</button>
-<button class="px-sm py-1 bg-surface-container-highest border border-outline-variant rounded font-label-sm hover:text-primary">X-BAND</button>
+<div class="relative flex-1 bg-black min-h-[300px] overflow-hidden group">
+<img
+src="{{ url_for('static', filename='uploads/' + uploaded_image) }}"
+alt="Uploaded SAR Image"
+class="w-full h-full object-cover grayscale brightness-125 contrast-150">
+<div class="scanline"></div>
+<div class="absolute bottom-xs right-xs bg-black/60 px-xs py-0.5 rounded font-code-data text-[10px] text-secondary">PROCESSED_DATA_STREAM</div>
 </div>
 </div>
-<div class="relative px-md py-lg">
-<!-- Intensity Sparkline -->
-<div class="absolute top-0 left-md right-md h-12 opacity-30 pointer-events-none">
-<svg class="w-full h-full preserve-3d" preserveaspectratio="none" viewbox="0 0 1000 100">
-<path d="M0 80 Q 50 20 100 70 T 200 40 T 300 90 T 400 30 T 500 60 T 600 10 T 700 85 T 800 45 T 900 75 T 1000 20" fill="none" stroke="#ffb690" stroke-width="2"></path>
-</svg>
+<!-- Right Column: Prediction Summary -->
+<div class="glass-panel rounded-xl p-lg flex flex-col justify-between border-secondary/20">
+<div>
+<p class="font-label-sm text-outline uppercase tracking-widest mb-xs">Prediction Analysis</p>
+<div class="flex items-baseline gap-sm mb-lg">
+<h3 class="font-headline-lg text-secondary text-5xl">{{ prediction }}{% if prediction == "Flood" %}
+<div class="flex items-center gap-sm mb-lg">
+
+{% if prediction == "Flood" %}
+
+<h3 class="font-headline-lg text-red-400 text-5xl">
+⚠ FLOOD DETECTED
+</h3>
+
+<span
+class="material-symbols-outlined text-red-400 text-4xl animate-pulse"
+style="font-variation-settings:'FILL' 1;">
+warning
+</span>
+
+{% else %}
+
+<h3 class="font-headline-lg text-green-400 text-5xl">
+✓ NO FLOOD
+</h3>
+<span class="material-symbols-outlined">
+
+{{ "warning" if prediction=="Flood" else "check_circle" }}
+
+</span>
+
 </div>
-<div class="timeline-track h-2 w-full rounded-full relative">
-<!-- Markers -->
-<div class="absolute top-1/2 left-0 -translate-y-1/2 w-4 h-4 rounded-full bg-surface border-2 border-outline z-10"></div>
-<div class="absolute top-1/2 left-[25%] -translate-y-1/2 w-4 h-4 rounded-full bg-surface border-2 border-outline z-10"></div>
-<div class="absolute top-1/2 left-[50%] -translate-y-1/2 w-4 h-4 rounded-full bg-surface border-2 border-outline z-10"></div>
-<div class="absolute top-1/2 left-[75%] -translate-y-1/2 w-4 h-4 rounded-full bg-surface border-2 border-outline z-10"></div>
-<div class="absolute top-1/2 right-0 -translate-y-1/2 w-6 h-6 rounded-full bg-primary border-4 border-surface z-20 shadow-[0_0_15px_rgba(0,219,233,0.6)] cursor-pointer"></div>
+<span class="material-symbols-outlined text-secondary text-4xl animate-pulse" style="font-variation-settings: 'FILL' 1;">warning</span>
 </div>
-<div class="flex justify-between mt-sm">
-<span class="font-code-data text-label-sm text-outline">OCT 12</span>
-<span class="font-code-data text-label-sm text-outline">OCT 19</span>
-<span class="font-code-data text-label-sm text-outline">OCT 26</span>
-<span class="font-code-data text-label-sm text-outline">NOV 02</span>
-<span class="font-code-data text-label-sm text-primary font-bold">NOV 09 [LIVE]</span>
+<div class="space-y-lg">
+<div class="bg-surface-container rounded-lg p-md border border-outline-variant">
+<div class="flex justify-between items-center mb-sm">
+<span class="font-label-md text-on-surface-variant">Confidence Rating</span>
+<span class="font-code-data text-secondary text-lg font-bold">{{ confidence }}%</span>
+</div>
+<div class="w-full h-2 bg-surface-container-highest rounded-full overflow-hidden">
+<div
+class="h-full rounded-full bg-secondary transition-all duration-700"
+style="width: {{ confidence }}%;">
 </div>
 </div>
+</div>
+<div class="grid grid-cols-2 gap-md">
+<div class="space-y-1">
+<span class="text-outline font-label-sm block">Core Engine</span>
+<span class="text-primary font-headline-md block">Simple Transformer</span>
+</div>
+<div class="space-y-1">
+<span class="text-outline font-label-sm block">Detection Classes</span>
+<span class="text-on-surface font-label-md block">Flood,No Flood</span>
+</div>
+</div>
+</div>
+</div>
+<div class="mt-lg pt-lg border-t border-outline-variant">
+<p class="text-on-surface-variant leading-relaxed">
+
+{% if prediction == "Flood" %}
+
+The uploaded SAR image has been classified as a
+<strong class="text-red-400">Flood Scene</strong>
+by the Transformer model.
+
+{% else %}
+
+The uploaded SAR image has been classified as a
+<strong class="text-green-400">Non-Flood Scene</strong>
+by the Transformer model.
+
+{% endif %}
+
+</p>
+</div>
+</div>
+</div>
+<!-- Details Section (Full Width) -->
+<div class="glass-panel rounded-xl p-lg">
+<h4 class="font-label-md text-primary uppercase tracking-widest mb-md">Analysis Summary</h4>
+<div class="grid grid-cols-2 md:grid-cols-4 gap-lg">
+<div class="space-y-1">
+<span class="text-outline font-label-sm block">Image Size</span>
+<span class="text-on-surface font-code-data text-lg block">128 x 128 px</span>
+</div>
+<div class="space-y-1">
+<span class="text-outline font-label-sm block">
+
+Timestamp
+
+</span>
+
+<span class="text-on-surface font-code-data">
+
+{{ timestamp }}
+
+</span>
+</div>
+<div class="space-y-1">
+<span>
+
+Model
+
+</span>
+
+<span>
+
+Simple Transformer v1
+
+</span>
+</div>
+<div class="space-y-1">
+<span class="text-outline font-label-sm block">Processing Status</span>
+<div class="flex items-center gap-xs">
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+<span class="text-secondary font-label-md block">Completed</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Footer Actions -->
+<div class="flex flex-col sm:flex-row justify-end items-center gap-md pt-md pb-xl">
+<button class="w-full sm:w-auto px-lg py-sm rounded-lg border border-outline hover:border-primary hover:text-primary transition-all font-label-md text-label-md uppercase tracking-wider flex items-center justify-center gap-xs">
+<span class="material-symbols-outlined text-sm">refresh</span>
+                    Analyze Another Image
+                </button>
+<button class="w-full sm:w-auto px-lg py-sm rounded-lg bg-primary text-on-primary-container font-label-md text-label-md uppercase tracking-wider flex items-center justify-center gap-xs shadow-[0_0_20px_rgba(219,252,255,0.2)] hover:shadow-[0_0_30px_rgba(219,252,255,0.4)] transition-all">
+<span class="material-symbols-outlined text-sm">map</span>
+                    View Flood Map
+                </button>
 </div>
 </div>
 </main>
-<!-- Footer (Standard but suppressed for focused map unless small) -->
-<footer class="fixed bottom-0 w-full z-50 bg-surface-container-lowest hidden border-t border-outline-variant">
-<div class="flex flex-col md:flex-row justify-between items-center px-gutter py-lg max-w-7xl mx-auto">
-<p class="font-label-sm text-label-sm text-on-surface-variant">© 2024 GEO-SAR Intelligence Systems. Mission Critical Precision.</p>
-<div class="flex gap-md mt-sm md:mt-0">
-<a class="text-on-surface-variant hover:text-secondary transition-opacity duration-300 font-label-sm text-label-sm" href="#">Privacy Policy</a>
-<a class="text-on-surface-variant hover:text-secondary transition-opacity duration-300 font-label-sm text-label-sm" href="#">Terms of Service</a>
-<a class="text-on-surface-variant hover:text-secondary transition-opacity duration-300 font-label-sm text-label-sm" href="#">Security Architecture</a>
-<a class="text-on-surface-variant hover:text-secondary transition-opacity duration-300 font-label-sm text-label-sm" href="#">API Docs</a>
-</div>
-</div>
-</footer>
 <script>
-        // Micro-interactions for the interactive map and slider
         document.addEventListener('DOMContentLoaded', () => {
-            const mapControls = document.querySelectorAll('.glass-panel button');
-            mapControls.forEach(btn => {
-                btn.addEventListener('click', function() {
-                    this.classList.add('scale-90');
-                    setTimeout(() => this.classList.remove('scale-90'), 100);
-                });
-            });
-
-            // Simulated timeline drag effect
-            const thumb = document.querySelector('.timeline-track div:last-child');
-            let isDragging = false;
-
-            thumb.addEventListener('mousedown', () => isDragging = true);
-            window.addEventListener('mouseup', () => isDragging = false);
-
-            window.addEventListener('mousemove', (e) => {
-                if (!isDragging) return;
-                const track = document.querySelector('.timeline-track');
-                const rect = track.getBoundingClientRect();
-                let x = e.clientX - rect.left;
-                let percent = (x / rect.width) * 100;
-                percent = Math.max(0, Math.min(100, percent));
-                thumb.style.left = `calc(${percent}% - 12px)`;
-                
-                // Visual feedback on map opacity or something similar could be added here
-            });
+            // Placeholder for potential interactive elements in the results page
         });
     </script>
 </body></html>
