@@ -7,7 +7,6 @@
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
 <script id="tailwind-config">
       tailwind.config = {
         darkMode: "class",
@@ -129,7 +128,7 @@
 <span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-primary transition-colors">notifications</span>
 <span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-primary transition-colors">settings</span>
 <div class="w-8 h-8 rounded-full overflow-hidden border border-outline ml-xs">
-<img class="w-full h-full object-cover" data-alt="A professional close-up profile portrait of a geospatial data scientist in a modern dark-themed studio. Soft atmospheric cyan lighting hits the side of their face, creating a technical and serious mood. The background is a blurred high-tech command center with glowing screens. Corporate minimalist style with high contrast and sharp focus." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAckysBnU2ETZlFNRwvzRCCOApIczFavm7DH1xt2Z3mCAJw25C3jyOiGGKAB3vfMSf2UQtiWTVNI4oWazjsYryJ0E5bpHdAc9InyGtjD0-GFUIfqj_lsrSctk4npTG-pO6QhVFEKJA72icdmRh1GFf9CCB0oR8J7yHx_NdoV0VlfMoU4vlqayiWFTqZpkj_D65rPd4tiqltYK9BSU5qj2-HAEHqgTHjTmbg2M9QBtB7dLOrpu6o7UTfGg2ps-gWN3jJSpKlS_midvs"/>
+<img class="w-full h-full object-cover" alt="A professional close-up profile portrait of a geospatial data scientist in a modern dark-themed studio. Soft atmospheric cyan lighting hits the side of their face, creating a technical and serious mood. The background is a blurred high-tech command center with glowing screens. Corporate minimalist style with high contrast and sharp focus." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAckysBnU2ETZlFNRwvzRCCOApIczFavm7DH1xt2Z3mCAJw25C3jyOiGGKAB3vfMSf2UQtiWTVNI4oWazjsYryJ0E5bpHdAc9InyGtjD0-GFUIfqj_lsrSctk4npTG-pO6QhVFEKJA72icdmRh1GFf9CCB0oR8J7yHx_NdoV0VlfMoU4vlqayiWFTqZpkj_D65rPd4tiqltYK9BSU5qj2-HAEHqgTHjTmbg2M9QBtB7dLOrpu6o7UTfGg2ps-gWN3jJSpKlS_midvs"/>
 </div>
 </div>
 </div>
@@ -202,10 +201,11 @@
 <form
     action="{{ url_for('predict_route') }}"
     method="POST"
-    enctype="multipart/form-data">
+    enctype="multipart/form-data"
+    class="col-span-12 lg:col-span-8">
 
 <div
-class="col-span-12 lg:col-span-8 glass-panel rounded-xl p-lg flex flex-col items-center justify-center min-h-[400px] border-dashed border-2 border-outline-variant hover:border-primary-container transition-all group"
+class="glass-panel rounded-xl p-lg flex flex-col items-center justify-center min-h-[400px] border-dashed border-2 border-outline-variant hover:border-primary-container transition-all group"
 id="dropzone">
 <div class="w-20 h-20 rounded-full bg-surface-container-highest flex items-center justify-center mb-md group-hover:scale-110 transition-transform">
 <span class="material-symbols-outlined text-primary-fixed-dim text-4xl">cloud_upload</span>
@@ -235,13 +235,12 @@ class="bg-primary-container text-on-primary-container px-lg py-sm rounded font-l
 Run Flood Detection
 
 </button>
-<button class="bg-transparent border border-outline-variant text-on-surface px-lg py-sm rounded font-label-md text-label-md hover:bg-surface-variant transition-colors">Connect AWS S3</button>
+<button type="button" class="bg-transparent border border-outline-variant text-on-surface px-lg py-sm rounded font-label-md text-label-md hover:bg-surface-variant transition-colors">Connect AWS S3</button>
 </div>
 <div class="mt-lg flex gap-sm opacity-50">
 <div class="px-xs py-base bg-surface-container rounded font-label-sm text-label-sm border border-outline-variant">.tiff</div>
 <div class="px-xs py-base bg-surface-container rounded font-label-sm text-label-sm border border-outline-variant">.h5</div>
 <div class="px-xs py-base bg-surface-container rounded font-label-sm text-label-sm border border-outline-variant">.zip</div>
-</div>
 </div>
 </div>
 </form>
@@ -264,10 +263,10 @@ Run Flood Detection
 <div>
 <label class="font-label-sm text-label-sm text-on-surface-variant block mb-base">Polarization Mode</label>
 <div class="grid grid-cols-2 gap-xs">
-<button class="bg-secondary-container text-on-secondary-container border border-secondary p-xs rounded font-label-sm text-label-sm">Dual-Pol (VV+VH)</button>
-<button class="bg-surface-container-highest text-on-surface-variant border border-outline-variant p-xs rounded font-label-sm text-label-sm hover:border-secondary transition-colors">Single-Pol (VV)</button>
-<button class="bg-surface-container-highest text-on-surface-variant border border-outline-variant p-xs rounded font-label-sm text-label-sm hover:border-secondary transition-colors">Full-Pol (Quad)</button>
-<button class="bg-surface-container-highest text-on-surface-variant border border-outline-variant p-xs rounded font-label-sm text-label-sm hover:border-secondary transition-colors">CP-SAR</button>
+<button type="button" class="bg-secondary-container text-on-secondary-container border border-secondary p-xs rounded font-label-sm text-label-sm">Dual-Pol (VV+VH)</button>
+<button type="button" class="bg-surface-container-highest text-on-surface-variant border border-outline-variant p-xs rounded font-label-sm text-label-sm hover:border-secondary transition-colors">Single-Pol (VV)</button>
+<button type="button" class="bg-surface-container-highest text-on-surface-variant border border-outline-variant p-xs rounded font-label-sm text-label-sm hover:border-secondary transition-colors">Full-Pol (Quad)</button>
+<button type="button" class="bg-surface-container-highest text-on-surface-variant border border-outline-variant p-xs rounded font-label-sm text-label-sm hover:border-secondary transition-colors">CP-SAR</button>
 </div>
 </div>
 <div>

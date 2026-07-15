@@ -1,17 +1,18 @@
-from flask import Flask, render_template
-import os
-
 from flask import (
     Flask,
     render_template,
-    request
+    request,
+    send_from_directory,
+    redirect,
+    url_for
 )
+import os
 from datetime import datetime
-timestamp = datetime.now().strftime("%d %b %Y %H:%M")
-
 from werkzeug.utils import secure_filename
 from utils.predict import predict
+
 app = Flask(__name__)
+
 UPLOAD_FOLDER = os.path.join(
     os.path.dirname(__file__),
     "uploads"
@@ -20,6 +21,7 @@ UPLOAD_FOLDER = os.path.join(
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
 
 @app.route("/")
 def home():
@@ -38,10 +40,20 @@ def upload():
 
 @app.route("/map")
 def map_view():
-    return render_template("map.html")
+    # No prediction data yet — send the user back to the upload page
+    # instead of rendering map.html with missing variables.
+    return redirect(url_for("upload"))
+
+
+# NEW: serves the actual uploaded image file back to the browser.
+# This is the endpoint map.html's url_for('uploaded_file', ...) needs.
+@app.route("/uploads/<filename>")
+def uploaded_file(filename):
+    return send_from_directory(app.config["UPLOAD_FOLDER"], filename)
+
 
 @app.route("/predict", methods=["POST"])
-def predict_route():
+def predict_flood():
 
     if "image" not in request.files:
         return "No image uploaded."
@@ -62,13 +74,16 @@ def predict_route():
 
     prediction, confidence = predict(image_path)
 
+    # Compute timestamp per-request (not once at import time)
+    timestamp = datetime.now().strftime("%d %b %Y %H:%M")
+
     return render_template(
-    "map.html",
-    prediction=prediction,
-    confidence=confidence,
-    uploaded_image=filename,
-    timestamp=timestamp
-)
+        "map.html",
+        prediction=prediction,
+        confidence=confidence,
+        image=filename,       # renamed from uploaded_image to match map.html's {{ image }}
+        timestamp=timestamp
+    )
 
 
 if __name__ == "__main__":

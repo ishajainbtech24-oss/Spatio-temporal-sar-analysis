@@ -170,7 +170,7 @@
 </div>
 <nav class="flex-1 space-y-xs overflow-y-auto">
 <div class="group flex items-center gap-sm px-sm py-md rounded-lg text-on-surface-variant hover:bg-surface-variant/50 transition-all cursor-pointer">
-<span class="material-symbols-outlined">Dashboard</span>
+<span class="material-symbols-outlined">upload</span>
 <span class="font-label-md text-label-md">Upload SAR</span>
 </div>
 <div class="group flex items-center gap-sm px-sm py-md rounded-lg bg-secondary-container text-on-secondary-container border-l-4 border-secondary font-bold cursor-pointer">
@@ -178,15 +178,7 @@
 <span class="font-label-md text-label-md">SAR Library</span>
 </div>
 <div class="group flex items-center gap-sm px-sm py-md rounded-lg text-on-surface-variant hover:bg-surface-variant/50 transition-all cursor-pointer">
-<span class="material-symbols-outlined">{% if prediction == "Flood" %}
-
-warning
-
-{% else %}
-
-check_circle
-
-{% endif %}</span>
+<span class="material-symbols-outlined">{% if prediction == "Flood" %}warning{% else %}check_circle{% endif %}</span>
 <span class="font-label-md text-label-md">Results</span>
 </div>
 <div class="group flex items-center gap-sm px-sm py-md rounded-lg text-on-surface-variant hover:bg-surface-variant/50 transition-all cursor-pointer">
@@ -240,11 +232,11 @@ check_circle
 <div class="glass-panel rounded-xl overflow-hidden flex flex-col">
 <div class="px-md py-sm border-b border-outline-variant flex justify-between items-center bg-surface-container-high/50">
 <span class="font-label-md text-label-md text-primary uppercase tracking-wider">Uploaded SAR Image</span>
-<span class="font-code-data text-label-sm text-outline">{{ uploaded_image }}</span>
+<span class="font-code-data text-label-sm text-outline">{{ image }}</span>
 </div>
 <div class="relative flex-1 bg-black min-h-[300px] overflow-hidden group">
 <img
-src="{{ url_for('static', filename='uploads/' + uploaded_image) }}"
+src="{{ url_for('uploaded_file', filename=image) }}"
 alt="Uploaded SAR Image"
 class="w-full h-full object-cover grayscale brightness-125 contrast-150">
 <div class="scanline"></div>
@@ -256,8 +248,7 @@ class="w-full h-full object-cover grayscale brightness-125 contrast-150">
 <div>
 <p class="font-label-sm text-outline uppercase tracking-widest mb-xs">Prediction Analysis</p>
 <div class="flex items-baseline gap-sm mb-lg">
-<h3 class="font-headline-lg text-secondary text-5xl">{{ prediction }}{% if prediction == "Flood" %}
-<div class="flex items-center gap-sm mb-lg">
+<div class="flex items-center gap-4 mb-6">
 
 {% if prediction == "Flood" %}
 
@@ -266,24 +257,25 @@ class="w-full h-full object-cover grayscale brightness-125 contrast-150">
 </h3>
 
 <span
-class="material-symbols-outlined text-red-400 text-4xl animate-pulse"
+class="material-symbols-outlined text-red-400 text-5xl"
 style="font-variation-settings:'FILL' 1;">
 warning
 </span>
+
+<span class="material-symbols-outlined text-secondary text-4xl animate-pulse" style="font-variation-settings: 'FILL' 1;">warning</span>
 
 {% else %}
 
 <h3 class="font-headline-lg text-green-400 text-5xl">
 ✓ NO FLOOD
 </h3>
+
 <span class="material-symbols-outlined">
-
-{{ "warning" if prediction=="Flood" else "check_circle" }}
-
+check_circle
 </span>
+{% endif %}
 
 </div>
-<span class="material-symbols-outlined text-secondary text-4xl animate-pulse" style="font-variation-settings: 'FILL' 1;">warning</span>
 </div>
 <div class="space-y-lg">
 <div class="bg-surface-container rounded-lg p-md border border-outline-variant">
@@ -305,7 +297,7 @@ style="width: {{ confidence }}%;">
 </div>
 <div class="space-y-1">
 <span class="text-outline font-label-sm block">Detection Classes</span>
-<span class="text-on-surface font-label-md block">Flood,No Flood</span>
+<span class="text-on-surface font-label-md block">Flood, No Flood</span>
 </div>
 </div>
 </div>
@@ -353,13 +345,13 @@ Timestamp
 </span>
 </div>
 <div class="space-y-1">
-<span>
+<span class="text-outline font-label-sm block">
 
 Model
 
 </span>
 
-<span>
+<span class="text-on-surface font-code-data text-lg block">
 
 Simple Transformer v1
 
