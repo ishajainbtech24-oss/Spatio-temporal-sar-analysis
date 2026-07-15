@@ -171,7 +171,7 @@ def preprocess_image(image_path):
 # ==========================================================
 # Prediction
 # ==========================================================
-def predict_flood(image_path):
+def predict(image_path):
 
     image = preprocess_image(image_path)
 
@@ -202,13 +202,8 @@ def predict_flood(image_path):
 
     confidence = probability if probability >= 0.5 else (1 - probability)
 
-    return {
+    return label, round(confidence * 100, 2)
 
-        "label": label,
-
-        "confidence": round(confidence * 100, 2)
-
-    }
 
 
 # ==========================================================
@@ -226,11 +221,11 @@ if __name__ == "__main__":
 
     if os.path.exists(test_image):
 
-        result = predict_flood(test_image)
+        label, confidence = predict(test_image)
 
         print("\n==============================")
-        print("Prediction :", result["label"])
-        print("Confidence :", result["confidence"], "%")
+        print("Prediction :", label)
+        print("Confidence :", confidence, "%")
         print("==============================")
 
     else:
