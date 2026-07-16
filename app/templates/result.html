@@ -1,28 +1,247 @@
 <!DOCTYPE html>
-<html lang="en">
-
+<html class="dark" lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Prediction Result</title>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>GEO-SAR | Result</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<style>
+  :root{
+    --surface-lowest:#060e20; --surface:#0b1326; --surface-low:#131b2e;
+    --surface-container:#171f33; --surface-high:#222a3d; --surface-highest:#2d3449;
+    --outline:#849495; --outline-variant:#3b494b;
+    --on-surface:#dae2fd; --on-surface-variant:#b9cacb;
+    --primary:#dbfcff; --primary-container:#00f0ff; --primary-fixed:#7df4ff; --primary-fixed-dim:#00dbe9;
+    --on-primary-container:#006970;
+    --secondary:#4fdbc8; --secondary-container:#04b4a2; --on-secondary-container:#003f38;
+    --error:#ffb4ab;
+  }
+  * { font-family:'Hanken Grotesk',sans-serif; }
+  body{ background:var(--surface); color:var(--on-surface); }
+  .mono{ font-family:'JetBrains Mono',monospace; }
+  .material-symbols-outlined{ font-variation-settings:'FILL' 0,'wght' 400; vertical-align:middle; }
+  .glass{ background:rgba(23,31,51,.7); backdrop-filter:blur(12px); border:1px solid rgba(255,255,255,.08); }
+  .scanline{ position:absolute; inset:0 0 auto 0; height:2px; background:var(--primary-fixed-dim); opacity:.6; box-shadow:0 0 12px var(--primary-fixed-dim); animation:scan 3s linear infinite; }
+  @keyframes scan{ 0%{top:0} 100%{top:100%} }
+  @media (prefers-reduced-motion: reduce){ .scanline{ animation:none; display:none; } }
+  #sidebar{ transition:transform .2s ease; }
+  @media (max-width:767px){ #sidebar{ transform:translateX(-100%); } #sidebar.open{ transform:translateX(0); } }
+  .map-backdrop{ position:fixed; inset:0; z-index:-1; pointer-events:none; overflow:hidden; }
+  .map-backdrop svg{ width:100%; height:100%; display:block; }
+</style>
 </head>
+<body class="min-h-screen">
+<!-- Shared elegant topographic map backdrop -->
+<div class="map-backdrop" aria-hidden="true">
+  <svg viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <radialGradient id="glowA" cx="15%" cy="8%" r="60%">
+        <stop offset="0%" stop-color="#00dbe9" stop-opacity="0.16"/>
+        <stop offset="100%" stop-color="#00dbe9" stop-opacity="0"/>
+      </radialGradient>
+      <radialGradient id="glowB" cx="92%" cy="96%" r="65%">
+        <stop offset="0%" stop-color="#4fdbc8" stop-opacity="0.12"/>
+        <stop offset="100%" stop-color="#4fdbc8" stop-opacity="0"/>
+      </radialGradient>
+      <pattern id="mapGrid" width="46" height="46" patternUnits="userSpaceOnUse">
+        <path d="M 46 0 L 0 0 0 46" fill="none" stroke="#849495" stroke-width="0.5" opacity="0.14"/>
+      </pattern>
+    </defs>
+    <rect width="1440" height="900" fill="url(#mapGrid)"/>
+    <rect width="1440" height="900" fill="url(#glowA)"/>
+    <rect width="1440" height="900" fill="url(#glowB)"/>
+    <g fill="none" stroke="#00dbe9" stroke-width="1" opacity="0.14">
+      <path d="M-100,120 C 250,20 420,220 760,90 S 1250,40 1650,170"/>
+      <path d="M-100,260 C 260,170 520,340 830,210 S 1320,170 1650,300"/>
+    </g>
+    <g fill="none" stroke="#4fdbc8" stroke-width="1" opacity="0.11">
+      <path d="M-100,420 C 300,330 560,500 870,370 S 1360,330 1650,460"/>
+      <path d="M-100,580 C 260,500 610,660 920,530 S 1330,490 1650,620"/>
+    </g>
+    <g fill="none" stroke="#00dbe9" stroke-width="1" opacity="0.08">
+      <path d="M-100,740 C 300,670 620,800 960,700 S 1360,660 1650,770"/>
+      <path d="M-100,860 C 320,810 640,900 980,830 S 1370,800 1650,880"/>
+    </g>
+  </svg>
+</div>
 
-<body>
+<!-- Nav -->
+<header class="fixed top-0 inset-x-0 z-50 h-16 border-b border-[var(--outline-variant)] bg-[var(--surface-high)] flex items-center justify-between px-4 sm:px-6">
+  <div class="flex items-center gap-4">
+    <button id="menuBtn" class="md:hidden p-2 -ml-2 text-[var(--on-surface-variant)]" aria-label="Toggle menu">
+      <span class="material-symbols-outlined">menu</span>
+    </button>
+    <a href="/" class="text-xl sm:text-2xl font-extrabold tracking-tight text-[var(--primary-fixed)]">GEO-SAR</a>
+  </div>
+  <a href="#" class="bg-[var(--primary-container)] text-[var(--on-primary-container)] px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-bold hover:opacity-90 active:scale-95 transition-all">Download Report</a>
+</header>
 
-    <h1>Prediction Result</h1>
+<!-- Sidebar -->
+<aside id="sidebar" class="fixed left-0 top-16 bottom-0 w-64 z-40 bg-[var(--surface-low)] border-r border-[var(--outline-variant)] flex flex-col py-4 px-3">
+  <div class="flex items-center gap-3 mb-6 px-1">
+    <div class="w-10 h-10 rounded bg-[var(--secondary-container)] flex items-center justify-center text-[var(--on-secondary-container)]">
+      <span class="material-symbols-outlined">satellite_alt</span>
+    </div>
+    <div>
+      <h3 class="font-bold text-[var(--primary)] leading-tight">Mission Control</h3>
+      <p class="mono text-xs text-[var(--secondary)]">SAR-7 Active</p>
+    </div>
+  </div>
+  <nav class="flex-1 flex flex-col gap-1 text-sm">
+    <a href="/dashboard" class="flex items-center gap-3 px-3 py-3 rounded text-[var(--on-surface-variant)] hover:bg-[var(--surface-highest)]/50 transition-colors">
+      <span class="material-symbols-outlined">live_tv</span> Live Feed
+    </a>
+    <a href="/upload" class="flex items-center gap-3 px-3 py-3 rounded text-[var(--on-surface-variant)] hover:bg-[var(--surface-highest)]/50 transition-colors">
+      <span class="material-symbols-outlined">upload</span> Upload SAR
+    </a>
+    <a href="#" class="flex items-center gap-3 px-3 py-3 rounded bg-[var(--secondary-container)] text-[var(--on-secondary-container)] font-bold">
+      <span id="sidebarResultIcon" class="material-symbols-outlined">check_circle</span> Results
+    </a>
+  </nav>
+</aside>
+<div id="sidebarOverlay" class="hidden fixed inset-0 bg-black/50 z-30 md:hidden"></div>
 
-    <img src="{{ url_for('uploaded_file', filename=image) }}"
-         width="350">
+<!-- Main -->
+<main class="pt-16 md:pl-64 min-h-screen">
+  <div class="max-w-5xl mx-auto p-4 sm:p-6 space-y-5">
 
-    <br><br>
+    <div class="flex items-center gap-3">
+      <div class="w-1.5 h-7 bg-[var(--secondary)] rounded"></div>
+      <h1 class="text-xl sm:text-2xl font-extrabold">AI Flood Detection Result</h1>
+    </div>
 
-    <h2>Prediction: {{ prediction }}</h2>
+    <!-- Plain-language status banner -->
+    <div id="statusBanner" class="glass rounded-xl p-5 sm:p-6 flex items-center gap-4 border-l-4">
+      <span id="statusIcon" class="material-symbols-outlined text-4xl sm:text-5xl shrink-0">check_circle</span>
+      <div>
+        <h2 id="statusHeadline" class="text-2xl sm:text-3xl font-extrabold leading-tight">No Flood Detected</h2>
+        <p id="statusSubtext" class="text-sm text-[var(--on-surface-variant)] mt-1">Water signatures in this image were within the normal range.</p>
+      </div>
+    </div>
 
-    <h3>Confidence: {{ confidence }}%</h3>
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <!-- Uploaded image -->
+      <div class="glass rounded-xl overflow-hidden flex flex-col">
+        <div class="px-4 py-2.5 border-b border-[var(--outline-variant)] flex justify-between items-center bg-[var(--surface-high)]/50">
+          <span class="text-xs font-bold uppercase tracking-wider text-[var(--primary)]">Uploaded SAR Image</span>
+          <span class="mono text-[11px] text-[var(--outline)] truncate max-w-[40%]">{{ image }}</span>
+        </div>
+        <div class="relative flex-1 bg-black min-h-[260px] overflow-hidden">
+          <img src="{{ url_for('uploaded_file', filename=image) }}" id="resultImage" alt="Uploaded SAR image" class="w-full h-full object-cover grayscale brightness-125 contrast-150"/>
+          <div class="scanline"></div>
+        </div>
+      </div>
 
-    <br>
+      <!-- Confidence & details -->
+      <div class="glass rounded-xl p-5 sm:p-6 flex flex-col justify-between">
+        <div>
+          <p class="text-xs text-[var(--outline)] uppercase tracking-widest mb-3">Confidence Rating</p>
+          <div class="bg-[var(--surface-container)] rounded-lg p-4 border border-[var(--outline-variant)] mb-4">
+            <div class="flex justify-between items-center mb-2">
+              <span class="text-sm text-[var(--on-surface-variant)]">How confident the model is</span>
+              <span class="mono text-[var(--secondary)] text-lg font-bold">{{ confidence }}%</span>
+            </div>
+            <div class="w-full h-2 bg-[var(--surface-highest)] rounded-full overflow-hidden">
+              <div class="h-full rounded-full bg-[var(--secondary)]" style="width: {{ confidence }}%;"></div>
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-4 text-sm">
+            <div><span class="text-[var(--outline)] text-xs block">Core Engine</span><span class="text-[var(--primary)]">Simple Transformer</span></div>
+            <div><span class="text-[var(--outline)] text-xs block">Detects</span><span>Flood, No Flood</span></div>
+          </div>
+        </div>
+        <p id="predictionExplanation" class="text-sm text-[var(--on-surface-variant)] leading-relaxed pt-4 mt-4 border-t border-[var(--outline-variant)]"></p>
+      </div>
+    </div>
 
-    <a href="/">Predict Another Image</a>
+    <!-- Details -->
+    <div class="glass rounded-xl p-5">
+      <h4 class="text-xs font-bold uppercase tracking-widest text-[var(--primary)] mb-4">Analysis Summary</h4>
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
+        <div><span class="text-[var(--outline)] text-xs block">Image Size</span><span class="mono">128 × 128 px</span></div>
+        <div><span class="text-[var(--outline)] text-xs block">Timestamp</span><span class="mono" id="resultTimestamp">{{ timestamp }}</span></div>
+        <div><span class="text-[var(--outline)] text-xs block">Model</span><span class="mono">Simple Transformer v1</span></div>
+        <div>
+          <span class="text-[var(--outline)] text-xs block">Status</span>
+          <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-[var(--secondary)]"></span>Completed</span>
+        </div>
+      </div>
+    </div>
 
+    <!-- Footer actions -->
+    <div class="flex flex-col sm:flex-row justify-end gap-3 pb-8">
+      <a href="/upload" class="text-center px-5 py-2.5 rounded-lg border border-[var(--outline)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-all text-sm font-bold flex items-center justify-center gap-2">
+        <span class="material-symbols-outlined text-base">refresh</span> Analyze Another Image
+      </a>
+      <a href="/dashboard" class="text-center px-5 py-2.5 rounded-lg bg-[var(--primary)] text-[#002022] text-sm font-bold flex items-center justify-center gap-2 hover:brightness-110 transition-all">
+        <span class="material-symbols-outlined text-base">dashboard</span> View on Dashboard
+      </a>
+    </div>
+
+  </div>
+</main>
+
+<script>
+  // Mobile sidebar toggle
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('sidebarOverlay');
+  const menuBtn = document.getElementById('menuBtn');
+  function toggleSidebar(open){
+    sidebar.classList.toggle('open', open);
+    overlay.classList.toggle('hidden', !open);
+  }
+  menuBtn.addEventListener('click', () => toggleSidebar(!sidebar.classList.contains('open')));
+  overlay.addEventListener('click', () => toggleSidebar(false));
+
+  // The only place Flood vs. No-Flood is branched on is here in JS —
+  // the markup above stays the same regardless of outcome.
+  const prediction = "{{ prediction }}";
+  const isFlood = prediction === "Flood";
+
+  const banner = document.getElementById('statusBanner');
+  const icon = document.getElementById('statusIcon');
+  const headline = document.getElementById('statusHeadline');
+  const subtext = document.getElementById('statusSubtext');
+  const explanation = document.getElementById('predictionExplanation');
+  const sidebarIcon = document.getElementById('sidebarResultIcon');
+
+  if (isFlood) {
+    banner.style.borderColor = 'var(--error)';
+    icon.textContent = 'warning';
+    icon.style.color = 'var(--error)';
+    headline.textContent = 'Flood Detected';
+    headline.style.color = 'var(--error)';
+    subtext.textContent = 'This image shows water signatures consistent with flooding.';
+    explanation.innerHTML = 'The uploaded SAR image was classified as a <strong style="color:var(--error)">flood scene</strong>, based on radar backscatter patterns the model associates with standing water.';
+    sidebarIcon.textContent = 'warning';
+  } else {
+    banner.style.borderColor = 'var(--secondary)';
+    icon.textContent = 'check_circle';
+    icon.style.color = 'var(--secondary)';
+    headline.textContent = 'No Flood Detected';
+    headline.style.color = 'var(--secondary)';
+    subtext.textContent = 'Water signatures in this image were within the normal range.';
+    explanation.innerHTML = 'The uploaded SAR image was classified as a <strong style="color:var(--secondary)">non-flood scene</strong>, with no unusual water signatures found.';
+    sidebarIcon.textContent = 'check_circle';
+  }
+
+  // Save this result so it shows up in "Recent Analyses" on the dashboard.
+  // Stored per-browser in localStorage under 'geosar_results' (kept to the last 10).
+  (function saveResult(){
+    const entry = {
+      image: document.getElementById('resultImage').getAttribute('src'),
+      prediction: prediction,
+      confidence: "{{ confidence }}",
+      timestamp: document.getElementById('resultTimestamp').textContent.trim() || new Date().toLocaleString()
+    };
+    let results = [];
+    try { results = JSON.parse(localStorage.getItem('geosar_results') || '[]'); } catch(e) { results = []; }
+    results.push(entry);
+    if (results.length > 10) results = results.slice(results.length - 10);
+    localStorage.setItem('geosar_results', JSON.stringify(results));
+  })();
+</script>
 </body>
-
 </html>

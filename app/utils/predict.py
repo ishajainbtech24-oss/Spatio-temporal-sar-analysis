@@ -51,7 +51,7 @@ class PositionEmbedding(tf.keras.layers.Layer):
 # Paths
 # ==========================================================
 
-BASE_DIR = os.path.dirname(__file__)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 MODEL_PATH = os.path.join(
     BASE_DIR,
@@ -69,166 +69,200 @@ ENCODER_PATH = os.path.join(
 
 
 # ==========================================================
-# Check files
+# Verify Model Files
 # ==========================================================
 
 print("=" * 60)
-print("Transformer:", MODEL_PATH)
-print("Encoder:", ENCODER_PATH)
-
-print("Transformer exists:", os.path.exists(MODEL_PATH))
-print("Encoder exists:", os.path.exists(ENCODER_PATH))
+print("Loading Models...")
+print("Transformer :", MODEL_PATH)
+print("Encoder     :", ENCODER_PATH)
 print("=" * 60)
+
+if not os.path.exists(MODEL_PATH):
+    raise FileNotFoundError(f"Transformer model not found:\n{MODEL_PATH}")
+
+if not os.path.exists(ENCODER_PATH):
+    raise FileNotFoundError(f"Encoder model not found:\n{ENCODER_PATH}")
 
 
 # ==========================================================
 # Load Encoder
 # ==========================================================
 
-try:
+encoder = tf.keras.models.load_model(
+    ENCODER_PATH,
+    compile=False
+)
 
-    encoder = tf.keras.models.load_model(ENCODER_PATH)
-
-    print("✅ Encoder loaded successfully!")
-
-    print("\n============================")
-    print("ENCODER MODEL")
-    print("============================")
-
-    encoder.summary()
-
-    print("\nInput Shape :", encoder.input_shape)
-    print("Output Shape:", encoder.output_shape)
-    print("============================\n")
-except Exception as e:
-
-    print("❌ Error loading encoder")
-    print(e)
-
-    encoder = None
+print("✅ Encoder Loaded")
 
 
 # ==========================================================
 # Load Transformer
 # ==========================================================
 
-try:
+model = tf.keras.models.load_model(
 
-    model = tf.keras.models.load_model(
+    MODEL_PATH,
 
-        MODEL_PATH,
+    compile=False,
 
-        custom_objects={
-            "PositionEmbedding": PositionEmbedding
-        }
+    custom_objects={
+        "PositionEmbedding": PositionEmbedding
+    }
 
-    )
+)
 
-    print("✅ Transformer model loaded successfully!")
-    print("\n============================")
-    print("TRANSFORMER MODEL")
-    print("============================")
+print("✅ Transformer Loaded")
 
-    model.summary()
-    print("\nInput Shape :", model.input_shape)
-    print("Output Shape:", model.output_shape)
 
-    print("============================\n")
+# ==========================================================
+# Image Size
+# ==========================================================
 
-except Exception as e:
-
-    print("❌ Error loading Transformer")
-    print(e)
-
-    model = None
+IMG_SIZE = 128
 
 
 # ==========================================================
 # Image Preprocessing
 # ==========================================================
 
-IMG_SIZE = 128
-
-
 def preprocess_image(image_path):
 
-    image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
+    image = cv2.imread(
+        image_path,
+        cv2.IMREAD_GRAYSCALE
+    )
 
     if image is None:
-        raise ValueError("Unable to read image.")
+        raise ValueError(
+            f"Unable to read image:\n{image_path}"
+        )
 
-    image = cv2.resize(image, (IMG_SIZE, IMG_SIZE))
+    image = cv2.resize(
+        image,
+        (IMG_SIZE, IMG_SIZE)
+    )
 
-    image = image.astype(np.float32) / 255.0
+    image = image.astype(np.float32)
 
-    image = np.expand_dims(image, axis=-1)
+    image = image / 255.0
 
-    image = np.expand_dims(image, axis=0)
+    image = np.expand_dims(
+        image,
+        axis=-1
+    )
+
+    image = np.expand_dims(
+        image,
+        axis=0
+    )
 
     return image
 
 
 # ==========================================================
-# Prediction
+# Prediction Function
 # ==========================================================
+
 def predict(image_path):
 
     image = preprocess_image(image_path)
 
-    features = encoder.predict(image, verbose=0)
+    # ------------------------------------------
+    # Encoder
+    # ------------------------------------------
 
-    tokens = features.reshape(
-        features.shape[0],
-        32 * 32,
-        16
+    features = encoder.predict(
+        image,
+        verbose=0
     )
 
-    print("\n========== PIPELINE ==========")
-    print("Input Image Shape      :", image.shape)
-    print("Encoder Output Shape   :", features.shape)
-    print("Transformer Input Shape:", tokens.shape)
+    # Shape:
+    # (1,32,32,16)
+    # →
+    # (1,1024,16)
 
-    prediction = model.predict(tokens, verbose=0)
+    tokens = features.reshape(
 
-    print("Raw Transformer Output :", prediction)
-    print("==============================\n")
+        features.shape[0],
+
+        32 * 32,
+
+        16
+
+    )
+
+    # ------------------------------------------
+    # Transformer
+    # ------------------------------------------
+
+    prediction = model.predict(
+        tokens,
+        verbose=0
+    )
 
     probability = float(prediction[0][0])
 
+    # ------------------------------------------
+    # Label
+    # ------------------------------------------
+
     if probability >= 0.5:
+
         label = "Flood"
+
+        confidence = probability
+
     else:
-        label = "Non-Flood"
 
-    confidence = probability if probability >= 0.5 else (1 - probability)
+        label = "No Flood"
 
-    return label, round(confidence * 100, 2)
+        confidence = 1 - probability
 
+    confidence = round(confidence * 100, 2)
+
+    # ------------------------------------------
+    # Console Logs
+    # ------------------------------------------
+
+    print("\n==============================")
+    print("Prediction Completed")
+    print("==============================")
+    print("Image      :", image_path)
+    print("Prediction :", label)
+    print("Confidence :", confidence, "%")
+    print("==============================\n")
+
+    return label, confidence
 
 
 # ==========================================================
-# Testing
+# Local Testing
 # ==========================================================
 
 if __name__ == "__main__":
 
-    test_image = os.path.join(
+    TEST_IMAGE = os.path.join(
+
         BASE_DIR,
+
         "..",
+
         "uploads",
+
         "test.png"
+
     )
 
-    if os.path.exists(test_image):
+    if os.path.exists(TEST_IMAGE):
 
-        label, confidence = predict(test_image)
+        label, confidence = predict(TEST_IMAGE)
 
-        print("\n==============================")
         print("Prediction :", label)
-        print("Confidence :", confidence, "%")
-        print("==============================")
+        print("Confidence :", confidence)
 
     else:
 
-        print("Place a test image inside:")
-        print("app/uploads/test.png")
+        print("Test image not found:")
+        print(TEST_IMAGE)

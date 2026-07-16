@@ -1,466 +1,220 @@
 <!DOCTYPE html>
-
-<html class="dark" lang="en"><head>
+<html class="dark" lang="en">
+<head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>GEO-SAR | Mission Control Upload</title>
-<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<script id="tailwind-config">
-      tailwind.config = {
-        darkMode: "class",
-        theme: {
-          extend: {
-            "colors": {
-                    "surface-container-lowest": "#060e20",
-                    "surface": "#0b1326",
-                    "inverse-on-surface": "#283044",
-                    "surface-container-high": "#222a3d",
-                    "on-tertiary-container": "#9d4300",
-                    "on-error": "#690005",
-                    "tertiary-fixed": "#ffdbca",
-                    "on-secondary-fixed": "#00201c",
-                    "on-primary-fixed-variant": "#004f54",
-                    "surface-container-highest": "#2d3449",
-                    "outline-variant": "#3b494b",
-                    "on-tertiary-fixed": "#341100",
-                    "error": "#ffb4ab",
-                    "on-background": "#dae2fd",
-                    "error-container": "#93000a",
-                    "secondary": "#4fdbc8",
-                    "on-tertiary-fixed-variant": "#783200",
-                    "on-secondary-fixed-variant": "#005048",
-                    "primary-container": "#00f0ff",
-                    "surface-tint": "#00dbe9",
-                    "inverse-surface": "#dae2fd",
-                    "tertiary-fixed-dim": "#ffb690",
-                    "inverse-primary": "#006970",
-                    "on-error-container": "#ffdad6",
-                    "on-primary-container": "#006970",
-                    "surface-container": "#171f33",
-                    "outline": "#849495",
-                    "on-secondary": "#003731",
-                    "on-surface": "#dae2fd",
-                    "on-primary": "#00363a",
-                    "tertiary-container": "#ffcfb8",
-                    "surface-container-low": "#131b2e",
-                    "primary-fixed-dim": "#00dbe9",
-                    "on-tertiary": "#552100",
-                    "secondary-container": "#04b4a2",
-                    "background": "#0b1326",
-                    "primary": "#dbfcff",
-                    "secondary-fixed-dim": "#4fdbc8",
-                    "on-secondary-container": "#003f38",
-                    "surface-dim": "#0b1326",
-                    "on-surface-variant": "#b9cacb",
-                    "tertiary": "#fff3ef",
-                    "surface-bright": "#31394d",
-                    "on-primary-fixed": "#002022",
-                    "surface-variant": "#2d3449",
-                    "secondary-fixed": "#71f8e4",
-                    "primary-fixed": "#7df4ff"
-            },
-            "borderRadius": {
-                    "DEFAULT": "0.125rem",
-                    "lg": "0.25rem",
-                    "xl": "0.5rem",
-                    "full": "0.75rem"
-            },
-            "spacing": {
-                    "gutter": "16px",
-                    "base": "4px",
-                    "xl": "64px",
-                    "xs": "8px",
-                    "sidebar-width": "320px",
-                    "sm": "16px",
-                    "md": "24px",
-                    "lg": "40px"
-            },
-            "fontFamily": {
-                    "headline-lg": ["Hanken Grotesk"],
-                    "body-md": ["Hanken Grotesk"],
-                    "label-sm": ["JetBrains Mono"],
-                    "label-md": ["JetBrains Mono"],
-                    "headline-md": ["Hanken Grotesk"],
-                    "code-data": ["JetBrains Mono"],
-                    "headline-lg-mobile": ["Hanken Grotesk"],
-                    "body-lg": ["Hanken Grotesk"]
-            },
-            "fontSize": {
-                    "headline-lg": ["40px", {"lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
-                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
-                    "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "400"}],
-                    "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.02em", "fontWeight": "500"}],
-                    "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
-                    "code-data": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
-                    "headline-lg-mobile": ["30px", {"lineHeight": "36px", "fontWeight": "700"}],
-                    "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}]
-            }
-          },
-        },
-      }
-    </script>
+<title>GEO-SAR | Upload</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <style>
-        body { background-color: #0b1326; color: #dae2fd; font-family: 'Hanken Grotesk', sans-serif; }
-        .glass-panel { backdrop-filter: blur(12px); background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(255, 255, 255, 0.1); }
-        .dropzone-active { border-color: #00f0ff; background: rgba(0, 240, 255, 0.05); }
-        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; vertical-align: middle; }
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #3b494b; border-radius: 10px; }
-    </style>
+  :root{
+    --surface-lowest:#060e20; --surface:#0b1326; --surface-low:#131b2e;
+    --surface-container:#171f33; --surface-high:#222a3d; --surface-highest:#2d3449;
+    --outline:#849495; --outline-variant:#3b494b;
+    --on-surface:#dae2fd; --on-surface-variant:#b9cacb;
+    --primary:#dbfcff; --primary-container:#00f0ff; --primary-fixed:#7df4ff; --primary-fixed-dim:#00dbe9;
+    --on-primary-container:#006970;
+    --secondary:#4fdbc8; --secondary-container:#04b4a2; --on-secondary-container:#003f38;
+  }
+  * { font-family:'Hanken Grotesk',sans-serif; }
+  body{ background:var(--surface); color:var(--on-surface); }
+  .mono{ font-family:'JetBrains Mono',monospace; }
+  .material-symbols-outlined{ font-variation-settings:'FILL' 0,'wght' 400; vertical-align:middle; }
+  .glass{ background:rgba(23,31,51,.7); backdrop-filter:blur(12px); border:1px solid rgba(255,255,255,.08); }
+  .dropzone-active{ border-color:var(--primary-container); background:rgba(0,240,255,.05); }
+  #sidebar{ transition:transform .2s ease; }
+  @media (max-width:767px){ #sidebar{ transform:translateX(-100%); } #sidebar.open{ transform:translateX(0); } }
+  .map-backdrop{ position:fixed; inset:0; z-index:-1; pointer-events:none; overflow:hidden; }
+  .map-backdrop svg{ width:100%; height:100%; display:block; }
+</style>
 </head>
-<body class="overflow-hidden">
-<!-- TopNavBar -->
-<header class="fixed top-0 w-full z-50 bg-surface-container-high border-b border-outline-variant shadow-sm flex justify-between items-center px-gutter h-16">
-<div class="flex items-center gap-md">
-<span class="font-headline-lg text-headline-lg text-primary-fixed tracking-tight">GEO-SAR</span>
-<nav class="hidden md:flex gap-md ml-lg">
-<a href="/dashboard">Dashboard</a>
-<a href="/upload">Imagery</a>
-<a href="/map">Flood Map</a>
-</nav>
+<body class="min-h-screen">
+<!-- Shared elegant topographic map backdrop -->
+<div class="map-backdrop" aria-hidden="true">
+  <svg viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <radialGradient id="glowA" cx="15%" cy="8%" r="60%">
+        <stop offset="0%" stop-color="#00dbe9" stop-opacity="0.16"/>
+        <stop offset="100%" stop-color="#00dbe9" stop-opacity="0"/>
+      </radialGradient>
+      <radialGradient id="glowB" cx="92%" cy="96%" r="65%">
+        <stop offset="0%" stop-color="#4fdbc8" stop-opacity="0.12"/>
+        <stop offset="100%" stop-color="#4fdbc8" stop-opacity="0"/>
+      </radialGradient>
+      <pattern id="mapGrid" width="46" height="46" patternUnits="userSpaceOnUse">
+        <path d="M 46 0 L 0 0 0 46" fill="none" stroke="#849495" stroke-width="0.5" opacity="0.14"/>
+      </pattern>
+    </defs>
+    <rect width="1440" height="900" fill="url(#mapGrid)"/>
+    <rect width="1440" height="900" fill="url(#glowA)"/>
+    <rect width="1440" height="900" fill="url(#glowB)"/>
+    <g fill="none" stroke="#00dbe9" stroke-width="1" opacity="0.14">
+      <path d="M-100,120 C 250,20 420,220 760,90 S 1250,40 1650,170"/>
+      <path d="M-100,260 C 260,170 520,340 830,210 S 1320,170 1650,300"/>
+    </g>
+    <g fill="none" stroke="#4fdbc8" stroke-width="1" opacity="0.11">
+      <path d="M-100,420 C 300,330 560,500 870,370 S 1360,330 1650,460"/>
+      <path d="M-100,580 C 260,500 610,660 920,530 S 1330,490 1650,620"/>
+    </g>
+    <g fill="none" stroke="#00dbe9" stroke-width="1" opacity="0.08">
+      <path d="M-100,740 C 300,670 620,800 960,700 S 1360,660 1650,770"/>
+      <path d="M-100,860 C 320,810 640,900 980,830 S 1370,800 1650,880"/>
+    </g>
+  </svg>
 </div>
-<div class="flex items-center gap-sm">
-<button class="bg-primary-container text-on-primary-container px-md py-xs rounded font-label-md text-label-md hover:opacity-90 active:opacity-80 transition-all">Deploy Analysis</button>
-<div class="flex items-center gap-xs ml-sm border-l border-outline-variant pl-sm">
-<span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-primary transition-colors">notifications</span>
-<span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-primary transition-colors">settings</span>
-<div class="w-8 h-8 rounded-full overflow-hidden border border-outline ml-xs">
-<img class="w-full h-full object-cover" alt="A professional close-up profile portrait of a geospatial data scientist in a modern dark-themed studio. Soft atmospheric cyan lighting hits the side of their face, creating a technical and serious mood. The background is a blurred high-tech command center with glowing screens. Corporate minimalist style with high contrast and sharp focus." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAckysBnU2ETZlFNRwvzRCCOApIczFavm7DH1xt2Z3mCAJw25C3jyOiGGKAB3vfMSf2UQtiWTVNI4oWazjsYryJ0E5bpHdAc9InyGtjD0-GFUIfqj_lsrSctk4npTG-pO6QhVFEKJA72icdmRh1GFf9CCB0oR8J7yHx_NdoV0VlfMoU4vlqayiWFTqZpkj_D65rPd4tiqltYK9BSU5qj2-HAEHqgTHjTmbg2M9QBtB7dLOrpu6o7UTfGg2ps-gWN3jJSpKlS_midvs"/>
-</div>
-</div>
-</div>
+
+<!-- Nav -->
+<header class="fixed top-0 inset-x-0 z-50 h-16 border-b border-[var(--outline-variant)] bg-[var(--surface-high)] flex items-center justify-between px-4 sm:px-6">
+  <div class="flex items-center gap-4">
+    <button id="menuBtn" class="md:hidden p-2 -ml-2 text-[var(--on-surface-variant)]" aria-label="Toggle menu">
+      <span class="material-symbols-outlined">menu</span>
+    </button>
+    <a href="/" class="text-xl sm:text-2xl font-extrabold tracking-tight text-[var(--primary-fixed)]">GEO-SAR</a>
+  </div>
+  <div class="flex items-center gap-3">
+    <span class="hidden sm:flex items-center gap-1 bg-[var(--surface-highest)] px-3 py-1.5 rounded text-xs border border-[var(--outline-variant)]">
+      <span class="material-symbols-outlined text-[var(--secondary)] text-sm">memory</span> AI Engine v2.4
+    </span>
+    <div class="w-8 h-8 rounded-full overflow-hidden border border-[var(--outline)] shrink-0">
+      <img class="w-full h-full object-cover" alt="Analyst avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAckysBnU2ETZlFNRwvzRCCOApIczFavm7DH1xt2Z3mCAJw25C3jyOiGGKAB3vfMSf2UQtiWTVNI4oWazjsYryJ0E5bpHdAc9InyGtjD0-GFUIfqj_lsrSctk4npTG-pO6QhVFEKJA72icdmRh1GFf9CCB0oR8J7yHx_NdoV0VlfMoU4vlqayiWFTqZpkj_D65rPd4tiqltYK9BSU5qj2-HAEHqgTHjTmbg2M9QBtB7dLOrpu6o7UTfGg2ps-gWN3jJSpKlS_midvs"/>
+    </div>
+  </div>
 </header>
-<!-- SideNavBar -->
-<aside class="fixed left-0 top-16 h-[calc(100vh-64px)] w-sidebar-width bg-surface-container-low border-r border-outline-variant flex flex-col py-md px-sm hidden md:flex">
-<div class="mb-lg px-xs">
-<div class="flex items-center gap-sm mb-xs">
-<div class="w-2 h-2 rounded-full bg-secondary animate-pulse"></div>
-<span class="font-headline-md text-headline-md text-primary">Mission Control</span>
-</div>
-<p class="font-label-sm text-label-sm text-on-surface-variant">SAR-7 Active • 0.4ms Latency</p>
-</div>
-<div class="flex-1 space-y-xs overflow-y-auto custom-scrollbar">
-<div class="flex items-center gap-sm p-sm rounded-lg text-on-surface-variant hover:bg-surface-variant/50 cursor-pointer active:scale-95 transition-all">
-<span class="material-symbols-outlined">satellite_alt</span>
-<span class="font-label-md text-label-md">Live Feed</span>
-</div>
-<div class="flex items-center gap-sm p-sm rounded-lg bg-secondary-container text-on-secondary-container border-l-4 border-secondary font-bold cursor-pointer active:scale-95 transition-all">
-<span class="material-symbols-outlined">layers</span>
-<span class="font-label-md text-label-md">SAR Library</span>
-</div>
-<div class="flex items-center gap-sm p-sm rounded-lg text-on-surface-variant hover:bg-surface-variant/50 cursor-pointer active:scale-95 transition-all">
-<span class="material-symbols-outlined">warning</span>
-<span class="font-label-md text-label-md">Threat Zones</span>
-</div>
-<div class="flex items-center gap-sm p-sm rounded-lg text-on-surface-variant hover:bg-surface-variant/50 cursor-pointer active:scale-95 transition-all">
-<span class="material-symbols-outlined">history</span>
-<span class="font-label-md text-label-md">Historical</span>
-</div>
-<div class="flex items-center gap-sm p-sm rounded-lg text-on-surface-variant hover:bg-surface-variant/50 cursor-pointer active:scale-95 transition-all">
-<span class="material-symbols-outlined">group</span>
-<span class="font-label-md text-label-md">Team</span>
-</div>
-</div>
-<div class="mt-auto border-t border-outline-variant pt-md space-y-xs">
-<div class="flex items-center gap-sm p-sm rounded-lg text-on-surface-variant hover:bg-surface-container-highest transition-all cursor-pointer">
-<span class="material-symbols-outlined">help</span>
-<span class="font-label-md text-label-md">Help</span>
-</div>
-<div class="flex items-center gap-sm p-sm rounded-lg text-on-surface-variant hover:bg-surface-container-highest transition-all cursor-pointer">
-<span class="material-symbols-outlined">check_circle</span>
-<span class="font-label-md text-label-md">Status</span>
-</div>
-</div>
+
+<!-- Sidebar -->
+<aside id="sidebar" class="fixed left-0 top-16 bottom-0 w-64 z-40 bg-[var(--surface-low)] border-r border-[var(--outline-variant)] flex flex-col py-4 px-3">
+  <div class="flex items-center gap-3 mb-6 px-1">
+    <div class="w-10 h-10 rounded bg-[var(--secondary-container)] flex items-center justify-center text-[var(--on-secondary-container)]">
+      <span class="material-symbols-outlined">satellite_alt</span>
+    </div>
+    <div>
+      <h3 class="font-bold text-[var(--primary)] leading-tight">Mission Control</h3>
+      <p class="mono text-xs text-[var(--secondary)]">SAR-7 Active</p>
+    </div>
+  </div>
+  <nav class="flex-1 flex flex-col gap-1 text-sm">
+    <a href="/dashboard" class="flex items-center gap-3 px-3 py-3 rounded text-[var(--on-surface-variant)] hover:bg-[var(--surface-highest)]/50 transition-colors">
+      <span class="material-symbols-outlined">live_tv</span> Live Feed
+    </a>
+    <a href="/upload" class="flex items-center gap-3 px-3 py-3 rounded bg-[var(--secondary-container)] text-[var(--on-secondary-container)] font-bold">
+      <span class="material-symbols-outlined">layers</span> SAR Library
+    </a>
+    <a href="/map" class="flex items-center gap-3 px-3 py-3 rounded text-[var(--on-surface-variant)] hover:bg-[var(--surface-highest)]/50 transition-colors">
+      <span class="material-symbols-outlined">warning</span> Threat Zones
+    </a>
+    <a href="#" class="flex items-center gap-3 px-3 py-3 rounded text-[var(--on-surface-variant)] hover:bg-[var(--surface-highest)]/50 transition-colors">
+      <span class="material-symbols-outlined">history</span> Historical
+    </a>
+  </nav>
 </aside>
-<!-- Main Content Canvas -->
-<main class="md:ml-sidebar-width mt-16 h-[calc(100vh-64px)] overflow-y-auto bg-surface custom-scrollbar relative">
-<!-- Background Animation Overlay -->
-<div class="absolute inset-0 pointer-events-none opacity-10">
+<div id="sidebarOverlay" class="hidden fixed inset-0 bg-black/50 z-30 md:hidden"></div>
 
-</div>
-<div class="relative z-10 max-w-7xl mx-auto p-md space-y-md">
-<!-- Page Header -->
-<div class="flex justify-between items-end mb-lg">
-<div>
-<h1 class="font-headline-lg text-headline-lg text-on-surface tracking-tight">Image Ingestion</h1>
-<p class="font-body-md text-body-md text-on-surface-variant">Process high-resolution Synthetic Aperture Radar data for environmental intelligence.</p>
-</div>
-<div class="flex gap-sm">
-<div class="bg-surface-container-high px-sm py-xs border border-outline-variant rounded flex items-center gap-xs">
-<span class="material-symbols-outlined text-secondary text-sm">memory</span>
-<span class="font-label-sm text-label-sm">AI Engine v2.4 Active</span>
-</div>
-</div>
-</div>
-<!-- Bento Grid Interface -->
-<div class="grid grid-cols-12 gap-md">
-<!-- Central Dropzone (Primary) -->
-<form
-    action="{{ url_for('predict_route') }}"
-    method="POST"
-    enctype="multipart/form-data"
-    class="col-span-12 lg:col-span-8">
+<!-- Main -->
+<main class="pt-16 md:pl-64 min-h-screen">
+  <div class="max-w-5xl mx-auto p-4 sm:p-6 space-y-5">
 
-<div
-class="glass-panel rounded-xl p-lg flex flex-col items-center justify-center min-h-[400px] border-dashed border-2 border-outline-variant hover:border-primary-container transition-all group"
-id="dropzone">
-<div class="w-20 h-20 rounded-full bg-surface-container-highest flex items-center justify-center mb-md group-hover:scale-110 transition-transform">
-<span class="material-symbols-outlined text-primary-fixed-dim text-4xl">cloud_upload</span>
-</div>
-<h2 class="font-headline-md text-headline-md text-on-surface mb-xs">Drop GeoTIFF or HDF5 files</h2>
-<input
-    type="file"
-    id="imageInput"
-    name="image"
-    accept=".png,.jpg,.jpeg,.tif,.tiff"
-    hidden
-    required>
-<p class="font-body-md text-body-md text-on-surface-variant mb-lg text-center max-w-md">Maximum single file size: 4GB. Multi-pol SAR bundles supported (Sentinel-1 / TerraSAR-X / ICEYE).</p>
-<div class="flex gap-md">
-<button
-type="button"
-id="selectButton"
-class="bg-secondary-container text-on-secondary-container px-lg py-sm rounded font-label-md text-label-md hover:bg-secondary-fixed-dim transition-colors">
+    <div>
+      <h1 class="text-2xl sm:text-3xl font-extrabold">Image Ingestion</h1>
+      <p class="text-[var(--on-surface-variant)] text-sm mt-1">Upload a SAR image for AI-powered flood detection.</p>
+    </div>
 
-Select SAR Image
+    <!-- Dropzone / form -->
+    <form action="{{ url_for('predict_route') }}" method="POST" enctype="multipart/form-data">
+      <div id="dropzone" class="glass rounded-xl p-6 sm:p-10 flex flex-col items-center justify-center min-h-[280px] border-dashed border-2 border-[var(--outline-variant)] hover:border-[var(--primary-container)] transition-colors">
+        <div class="w-16 h-16 rounded-full bg-[var(--surface-highest)] flex items-center justify-center mb-4">
+          <span class="material-symbols-outlined text-[var(--primary-fixed-dim)] text-3xl">cloud_upload</span>
+        </div>
+        <h2 class="text-lg font-bold mb-1 text-center">Drop a SAR image file</h2>
+        <input type="file" id="imageInput" name="image" accept=".png,.jpg,.jpeg,.tif,.tiff" hidden required>
+        <p class="text-sm text-[var(--on-surface-variant)] mb-6 text-center max-w-md">PNG, JPG or TIFF. Sentinel-1 / TerraSAR-X / ICEYE bundles supported.</p>
+        <div class="flex flex-wrap justify-center gap-3">
+          <button type="button" id="selectButton" class="bg-[var(--secondary-container)] text-[var(--on-secondary-container)] px-5 py-2.5 rounded text-sm font-bold hover:brightness-110 transition-all">Select Image</button>
+          <button type="submit" class="bg-[var(--primary-container)] text-[var(--on-primary-container)] px-5 py-2.5 rounded text-sm font-bold hover:brightness-110 transition-all">Run Flood Detection</button>
+        </div>
+      </div>
 
-</button>
-<button
-type="submit"
-class="bg-primary-container text-on-primary-container px-lg py-sm rounded font-label-md text-label-md hover:brightness-110 transition-all">
+      <!-- Metadata (optional context, non-blocking) -->
+      <div class="mt-4 glass rounded-xl p-4 sm:p-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="text-xs text-[var(--on-surface-variant)] block mb-1">Sensor Source</label>
+          <select class="w-full bg-[var(--surface-container)] border border-[var(--outline-variant)] rounded p-2.5 text-sm focus:border-[var(--primary)] outline-none">
+            <option>Sentinel-1 (ESA)</option>
+            <option>TerraSAR-X (DLR)</option>
+            <option>ICEYE (Micro-SAR)</option>
+            <option>Capella Space</option>
+          </select>
+        </div>
+        <div>
+          <label class="text-xs text-[var(--on-surface-variant)] block mb-1">Polarization Mode</label>
+          <div class="grid grid-cols-2 gap-2">
+            <button type="button" class="bg-[var(--secondary-container)] text-[var(--on-secondary-container)] border border-[var(--secondary)] p-2 rounded text-xs">Dual-Pol (VV+VH)</button>
+            <button type="button" class="bg-[var(--surface-highest)] text-[var(--on-surface-variant)] border border-[var(--outline-variant)] p-2 rounded text-xs hover:border-[var(--secondary)]">Single-Pol (VV)</button>
+          </div>
+        </div>
+      </div>
+    </form>
 
-Run Flood Detection
+    <!-- Processing queue -->
+    <div class="glass rounded-xl p-4 sm:p-5">
+      <div class="flex justify-between items-center mb-3">
+        <h3 class="font-bold">Active Processing Queue</h3>
+        <span class="mono text-xs text-[var(--secondary)]">1 Task Pending</span>
+      </div>
+      <div class="bg-[var(--surface-low)] border border-[var(--outline-variant)] rounded-lg p-4">
+        <div class="flex justify-between items-start mb-2 gap-3">
+          <div class="flex gap-3 min-w-0">
+            <div class="w-10 h-10 bg-[var(--surface-highest)] rounded flex items-center justify-center shrink-0">
+              <span class="material-symbols-outlined text-[#ffb690] text-lg">water_drop</span>
+            </div>
+            <div class="min-w-0">
+              <h4 class="text-sm truncate">S1A_IW_GRDH_1SDV_20240315...</h4>
+              <p class="text-xs text-[var(--on-surface-variant)]">Flood Mapping · Sentinel-1 · VV/VH</p>
+            </div>
+          </div>
+          <div class="text-right shrink-0">
+            <span class="mono text-sm">74%</span>
+            <p class="text-xs text-[var(--secondary)]">Orthorectification</p>
+          </div>
+        </div>
+        <div class="w-full bg-[var(--surface-highest)] h-1 rounded-full overflow-hidden">
+          <div class="bg-[var(--primary-container)] h-full rounded-full w-[74%]"></div>
+        </div>
+      </div>
+    </div>
 
-</button>
-<button type="button" class="bg-transparent border border-outline-variant text-on-surface px-lg py-sm rounded font-label-md text-label-md hover:bg-surface-variant transition-colors">Connect AWS S3</button>
-</div>
-<div class="mt-lg flex gap-sm opacity-50">
-<div class="px-xs py-base bg-surface-container rounded font-label-sm text-label-sm border border-outline-variant">.tiff</div>
-<div class="px-xs py-base bg-surface-container rounded font-label-sm text-label-sm border border-outline-variant">.h5</div>
-<div class="px-xs py-base bg-surface-container rounded font-label-sm text-label-sm border border-outline-variant">.zip</div>
-</div>
-</div>
-</form>
-<!-- Metadata Configuration (Sidebar in Canvas) -->
-<div class="col-span-12 lg:col-span-4 space-y-md">
-<div class="glass-panel rounded-xl p-md">
-<h3 class="font-label-md text-label-md text-secondary mb-md uppercase tracking-wider flex items-center gap-xs">
-<span class="material-symbols-outlined text-sm">settings_input_component</span> Metadata Fields
-                        </h3>
-<div class="space-y-md">
-<div>
-<label class="font-label-sm text-label-sm text-on-surface-variant block mb-base">Sensor Source</label>
-<select class="w-full bg-surface-container text-on-surface border-outline-variant rounded p-sm font-label-md text-label-md focus:border-primary focus:ring-1 focus:ring-primary outline-none">
-<option>Sentinel-1 (ESA)</option>
-<option>TerraSAR-X (DLR)</option>
-<option>ICEYE (Micro-SAR)</option>
-<option>Capella Space</option>
-</select>
-</div>
-<div>
-<label class="font-label-sm text-label-sm text-on-surface-variant block mb-base">Polarization Mode</label>
-<div class="grid grid-cols-2 gap-xs">
-<button type="button" class="bg-secondary-container text-on-secondary-container border border-secondary p-xs rounded font-label-sm text-label-sm">Dual-Pol (VV+VH)</button>
-<button type="button" class="bg-surface-container-highest text-on-surface-variant border border-outline-variant p-xs rounded font-label-sm text-label-sm hover:border-secondary transition-colors">Single-Pol (VV)</button>
-<button type="button" class="bg-surface-container-highest text-on-surface-variant border border-outline-variant p-xs rounded font-label-sm text-label-sm hover:border-secondary transition-colors">Full-Pol (Quad)</button>
-<button type="button" class="bg-surface-container-highest text-on-surface-variant border border-outline-variant p-xs rounded font-label-sm text-label-sm hover:border-secondary transition-colors">CP-SAR</button>
-</div>
-</div>
-<div>
-<label class="font-label-sm text-label-sm text-on-surface-variant block mb-base">Acquisition Location</label>
-<input class="w-full bg-surface-container text-on-surface border-outline-variant rounded p-sm font-label-md text-label-md placeholder:text-on-surface-variant/30 focus:border-primary outline-none" placeholder="Lat, Lon or Region Name" type="text"/>
-</div>
-</div>
-</div>
-<!-- Pipeline Selection -->
-<div class="glass-panel rounded-xl p-md">
-<h3 class="font-label-md text-label-md text-secondary mb-md uppercase tracking-wider">Analysis Pipeline</h3>
-<div class="space-y-sm">
-<label class="flex items-center gap-sm p-sm rounded hover:bg-white/5 cursor-pointer transition-colors group">
-<input checked="" class="w-4 h-4 rounded border-outline-variant text-secondary focus:ring-secondary bg-surface-container" type="checkbox"/>
-<div>
-<p class="font-label-md text-label-md text-on-surface">Flood Probability Mapping</p>
-<p class="font-label-sm text-label-sm text-on-surface-variant">Change detection vs historical baselines.</p>
-</div>
-</label>
-<label class="flex items-center gap-sm p-sm rounded hover:bg-white/5 cursor-pointer transition-colors group">
-<input checked="" class="w-4 h-4 rounded border-outline-variant text-secondary focus:ring-secondary bg-surface-container" type="checkbox"/>
-<div>
-<p class="font-label-md text-label-md text-on-surface">AI Terrain Segmentation</p>
-<p class="font-label-sm text-label-sm text-on-surface-variant">Multi-class classification (Water, Urban, Forest).</p>
-</div>
-</label>
-</div>
-</div>
-</div>
-<!-- Processing Queue & Progress -->
-<div class="col-span-12 glass-panel rounded-xl p-md">
-<div class="flex justify-between items-center mb-md">
-<h3 class="font-headline-md text-headline-md text-on-surface">Active Processing Queue</h3>
-<span class="font-code-data text-code-data text-secondary">3 Tasks Pending</span>
-</div>
-<div class="space-y-md">
-<!-- Active Task 1 -->
-<div class="bg-surface-container-low border border-outline-variant rounded-lg p-md">
-<div class="flex justify-between items-start mb-sm">
-<div class="flex gap-md">
-<div class="w-12 h-12 bg-surface-container-highest rounded flex items-center justify-center">
-<span class="material-symbols-outlined text-tertiary">water_drop</span>
-</div>
-<div>
-<h4 class="font-label-md text-label-md text-on-surface">S1A_IW_GRDH_1SDV_20240315...</h4>
-<p class="font-label-sm text-label-sm text-on-surface-variant">Flood Mapping • Sentinel-1 • VV/VH</p>
-</div>
-</div>
-<div class="text-right">
-<span class="font-code-data text-code-data text-on-surface">74%</span>
-<p class="font-label-sm text-label-sm text-secondary">Phase: Orthorectification</p>
-</div>
-</div>
-<div class="w-full bg-surface-container-highest h-1 rounded-full overflow-hidden">
-<div class="bg-primary-container h-full rounded-full w-[74%] shadow-[0_0_8px_rgba(0,240,255,0.5)]"></div>
-</div>
-</div>
-<!-- Active Task 2 -->
-<div class="bg-surface-container-low border border-outline-variant rounded-lg p-md">
-<div class="flex justify-between items-start mb-sm">
-<div class="flex gap-md">
-<div class="w-12 h-12 bg-surface-container-highest rounded flex items-center justify-center">
-<span class="material-symbols-outlined text-primary">analytics</span>
-</div>
-<div>
-<h4 class="font-label-md text-label-md text-on-surface">TSX1_SAR_SSC_20240228...</h4>
-<p class="font-label-sm text-label-sm text-on-surface-variant">AI Segmentation • TerraSAR-X • HH</p>
-</div>
-</div>
-<div class="text-right">
-<span class="font-code-data text-code-data text-on-surface">12%</span>
-<p class="font-label-sm text-label-sm text-on-surface-variant">Phase: Speckle Filtering</p>
-</div>
-</div>
-<div class="w-full bg-surface-container-highest h-1 rounded-full overflow-hidden">
-<div class="bg-primary-container h-full rounded-full w-[12%]"></div>
-</div>
-</div>
-</div>
-</div>
-<!-- Technical Specs / Guidelines -->
-<div class="col-span-12 lg:col-span-6 glass-panel rounded-xl p-md overflow-hidden relative">
-<div class="relative z-10">
-<h3 class="font-label-md text-label-md text-secondary mb-md uppercase tracking-wider">Calibration Baseline</h3>
-<div class="space-y-sm font-code-data text-code-data text-on-surface-variant">
-<div class="flex justify-between border-b border-outline-variant/30 pb-xs">
-<span>Reference Datum</span>
-<span class="text-on-surface">WGS 84 / EGM96</span>
-</div>
-<div class="flex justify-between border-b border-outline-variant/30 pb-xs">
-<span>Noise Floor (NESZ)</span>
-<span class="text-on-surface">-22 dB</span>
-</div>
-<div class="flex justify-between border-b border-outline-variant/30 pb-xs">
-<span>Incidence Angle Norm</span>
-<span class="text-on-surface">35.0°</span>
-</div>
-<div class="flex justify-between">
-<span>Orbit Precision</span>
-<span class="text-on-secondary">Validated (Precise)</span>
-</div>
-</div>
-</div>
-</div>
-<!-- System Usage Card -->
-<div class="col-span-12 lg:col-span-6 glass-panel rounded-xl p-md bg-gradient-to-br from-surface-container-high to-surface">
-<h3 class="font-label-md text-label-md text-secondary mb-md uppercase tracking-wider">Compute Utilization</h3>
-<div class="grid grid-cols-2 gap-md h-full">
-<div class="flex flex-col justify-center">
-<span class="text-4xl font-headline-md text-on-surface">14.2<span class="text-sm font-label-md text-on-surface-variant ml-xs">TFLOPS</span></span>
-<p class="font-label-sm text-label-sm text-on-surface-variant mt-xs">Active GPU Acceleration</p>
-</div>
-<div class="flex flex-col justify-center border-l border-outline-variant pl-md">
-<span class="text-4xl font-headline-md text-on-surface">892<span class="text-sm font-label-md text-on-surface-variant ml-xs">GB</span></span>
-<p class="font-label-sm text-label-sm text-on-surface-variant mt-xs">Temp Storage Used</p>
-</div>
-</div>
-</div>
-</div>
-</div>
-<!-- Footer -->
-<footer class="mt-xl bg-surface-container-lowest border-t border-outline-variant w-full">
-<div class="flex flex-col md:flex-row justify-between items-center px-gutter py-lg max-w-7xl mx-auto">
-<div class="mb-md md:mb-0">
-<span class="font-headline-md text-headline-md text-primary-fixed-dim block mb-xs">GEO-SAR</span>
-<p class="font-label-sm text-label-sm text-on-surface-variant">© 2024 GEO-SAR Intelligence Systems. Mission Critical Precision.</p>
-</div>
-<div class="flex flex-wrap gap-md">
-<a class="font-label-sm text-label-sm text-on-surface-variant hover:text-secondary transition-colors" href="#">Privacy Policy</a>
-<a class="font-label-sm text-label-sm text-on-surface-variant hover:text-secondary transition-colors" href="#">Terms of Service</a>
-<a class="font-label-sm text-label-sm text-on-surface-variant hover:text-secondary transition-colors" href="#">Security Architecture</a>
-<a class="font-label-sm text-label-sm text-on-surface-variant hover:text-secondary transition-colors" href="#">API Docs</a>
-</div>
-</div>
-</footer>
+  </div>
 </main>
+
 <script>
-        // Micro-interactions for dropzone
-        const dropzone = document.getElementById('dropzone');
-        
-        ['dragenter', 'dragover'].forEach(eventName => {
-            dropzone.addEventListener(eventName, (e) => {
-                e.preventDefault();
-                dropzone.classList.add('dropzone-active');
-            }, false);
-        });
+  // Mobile sidebar toggle
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('sidebarOverlay');
+  const menuBtn = document.getElementById('menuBtn');
+  function toggleSidebar(open){
+    sidebar.classList.toggle('open', open);
+    overlay.classList.toggle('hidden', !open);
+  }
+  menuBtn.addEventListener('click', () => toggleSidebar(!sidebar.classList.contains('open')));
+  overlay.addEventListener('click', () => toggleSidebar(false));
 
-        ['dragleave', 'drop'].forEach(eventName => {
-            dropzone.addEventListener(eventName, (e) => {
-                e.preventDefault();
-                dropzone.classList.remove('dropzone-active');
-            }, false);
-        });
+  // Dropzone interactions
+  const dropzone = document.getElementById('dropzone');
+  const selectButton = document.getElementById('selectButton');
+  const imageInput = document.getElementById('imageInput');
 
-        // Simple notification toggle simulation
-        document.querySelectorAll('.material-symbols-outlined').forEach(icon => {
-            icon.addEventListener('click', () => {
-                icon.classList.add('animate-ping');
-                setTimeout(() => icon.classList.remove('animate-ping'), 400);
-            });
-        });
-    </script>
-    <script>
-
-const selectButton = document.getElementById("selectButton");
-
-const imageInput = document.getElementById("imageInput");
-
-selectButton.onclick = () => {
-
-    imageInput.click();
-
-};
-
-imageInput.onchange = () => {
-
-    if(imageInput.files.length){
-
-        selectButton.innerText =
-            imageInput.files[0].name;
-
+  selectButton.onclick = () => imageInput.click();
+  imageInput.onchange = () => {
+    if (imageInput.files.length) selectButton.textContent = imageInput.files[0].name;
+  };
+  ['dragenter','dragover'].forEach(evt => dropzone.addEventListener(evt, e => { e.preventDefault(); dropzone.classList.add('dropzone-active'); }));
+  ['dragleave','drop'].forEach(evt => dropzone.addEventListener(evt, e => { e.preventDefault(); dropzone.classList.remove('dropzone-active'); }));
+  dropzone.addEventListener('drop', e => {
+    if (e.dataTransfer.files.length){
+      imageInput.files = e.dataTransfer.files;
+      selectButton.textContent = e.dataTransfer.files[0].name;
     }
-
-};
-dropzone.addEventListener("drop", function(e){
-
-    e.preventDefault();
-
-    imageInput.files = e.dataTransfer.files;
-
-    selectButton.innerText =
-        e.dataTransfer.files[0].name;
-
-});
-
+  });
 </script>
-</body></html>
+</body>
+</html>
