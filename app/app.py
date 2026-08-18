@@ -150,6 +150,16 @@ def predict_route():
         <p>{e}</p>
         <a href="/upload">Go Back</a>
         """
+    # --------------------------------------------
+    # Run Terrain Classification
+    # --------------------------------------------
+
+    try:
+        terrain = classify_terrain(image_path)
+    except Exception as e:
+        print("\nTerrain Classification Error")
+        print(e)
+        terrain = None
 
     # --------------------------------------------
     # Timestamp
