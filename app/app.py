@@ -183,7 +183,9 @@ def predict_route():
 
         image=filename,
 
-        timestamp=timestamp
+        timestamp=timestamp,
+
+        terrain=terrain
 
     )
 
