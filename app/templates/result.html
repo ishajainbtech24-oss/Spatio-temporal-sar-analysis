@@ -6,6 +6,7 @@
 <title>GEO-SAR | Result</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <style>
@@ -190,6 +191,61 @@
         <div><span class="text-[var(--outline)] text-xs block">Analyzed At</span><span class="mono" id="resultTimestamp">—</span></div>
         <div><span class="text-[var(--outline)] text-xs block">Model</span><span class="mono">Simple Transformer v1</span></div>
         <div>
+      {% if terrain %}
+<!-- Land Classification -->
+<div class="glass rounded-xl p-5">
+  <div class="flex items-center justify-between mb-1">
+    <h4 class="text-xs font-bold uppercase tracking-widest text-[var(--primary)]">Land Use Classification</h4>
+    <span class="text-[10px] text-[var(--outline)] italic">Estimated — unsupervised, not model-validated</span>
+  </div>
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 items-center mt-4">
+    <div class="flex justify-center">
+      <canvas id="terrainChart" width="220" height="220"></canvas>
+    </div>
+    <div class="space-y-3">
+      {% for label, pct in terrain.items() %}
+      <div class="flex items-center justify-between text-sm">
+        <div class="flex items-center gap-2">
+          <span class="w-3 h-3 rounded-full" style="background:{{ {'Water':'#00dbe9','Vegetation':'#4fdbc8','Urban':'#ffb690','Bare Soil':'#c9a66b'}[label] }}"></span>
+          <span>{{ label }}</span>
+        </div>
+        <span class="mono text-[var(--on-surface-variant)]">{{ pct }}%</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<script>
+  const terrainData = {{ terrain|tojson }};
+  const terrainColors = {
+    "Water": "#00dbe9",
+    "Vegetation": "#4fdbc8",
+    "Urban": "#ffb690",
+    "Bare Soil": "#c9a66b"
+  };
+  new Chart(document.getElementById('terrainChart').getContext('2d'), {
+    type: 'pie',
+    data: {
+      labels: Object.keys(terrainData),
+      datasets: [{
+        data: Object.values(terrainData),
+        backgroundColor: Object.keys(terrainData).map(k => terrainColors[k]),
+        borderColor: '#0b1326',
+        borderWidth: 2
+      }]
+    },
+    options: {
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: { label: (ctx) => `${ctx.label}: ${ctx.parsed}%` }
+        }
+      }
+    }
+  });
+</script>
+{% endif %}
           <span class="text-[var(--outline)] text-xs block">Status</span>
           <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-[var(--secondary)]"></span>Completed</span>
         </div>
