@@ -10,7 +10,7 @@ from flask import (
 import os
 from datetime import datetime
 from werkzeug.utils import secure_filename
-
+from utils.terrain import classify_terrain
 from utils.predict import predict
 
 
