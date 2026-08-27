@@ -1,0 +1,79 @@
+diff --git a/app/utils/predict.py b/app/utils/predict.py
+index abe9179..bb5a86b 100644
+--- a/app/utils/predict.py
++++ b/app/utils/predict.py
+@@ -3,6 +3,8 @@ import os
+ import cv2
+ import numpy as np
+ import tensorflow as tf
++from scipy.ndimage import median_filter
++from skimage.transform import resize
+ from tensorflow.keras import layers
+ from tensorflow.keras.models import load_model
+ 
+@@ -107,16 +109,43 @@ def _get_model():
+ # ==========================================================
+ 
+ def _preprocess(image_path):
++    """
++    Mirrors the exact preprocessing used to build X_train/X_test in
++    notebook 02_preprocessing.ipynb:
++
++        img = median_filter(img, size=3)
++        img = (img - img.min()) / (img.max() - img.min() + 1e-8)
++        img = resize(img, TARGET_SIZE, anti_aliasing=True)
++
++    The previous version here just did cv2.resize + /255, which is NOT the
++    same transform the model was trained on - a flat /255 assumes the pixel
++    values already span roughly the model's expected range, but the
++    training pipeline instead stretches EACH image individually to its own
++    full [0,1] range. Feeding the model images normalized a different way
++    than training pushes them out of the distribution it learned, which is
++    the most likely reason predictions were collapsing to the majority
++    class ("No Flood") regardless of the input image.
++    """
+ 
+     img = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
+ 
+     if img is None:
+         raise ValueError(f"Could not read image at {image_path}")
+ 
+-    img = cv2.resize(img, (128, 128))
+-
+     img = img.astype(np.float32)
+-    img = img / 255.0
++
++    # same denoising step used during training
++    img = median_filter(img, size=3)
++
++    # same per-image min-max normalization used during training (NOT /255,
++    # which assumes a fixed 0-255 range rather than stretching to this
++    # specific image's own min/max like the training pipeline does)
++    img = (img - img.min()) / (img.max() - img.min() + 1e-8)
++
++    # same resize call (skimage, anti_aliasing=True) used during training -
++    # cv2.resize uses a different default interpolation/anti-aliasing
++    # behavior, which is a smaller but still real source of mismatch
++    img = resize(img, (128, 128), anti_aliasing=True)
+ 
+     # add channel dimension - model input is (128,128,1); it tiles this into
+     # 3 fake-RGB channels internally before MobileNetV2, so nothing more is
+@@ -126,7 +155,7 @@ def _preprocess(image_path):
+     # add batch dimension
+     img = np.expand_dims(img, axis=0)
+ 
+-    return img
++    return img.astype(np.float32)
+ 
+ 
+ # ==========================================================
+diff --git a/requirements.txt b/requirements.txt
+index b352f58..767f222 100644
+--- a/requirements.txt
++++ b/requirements.txt
+@@ -2,3 +2,5 @@ tensorflow
+ opencv-python
+ numpy
+ scikit-learn
++scipy
++scikit-image
