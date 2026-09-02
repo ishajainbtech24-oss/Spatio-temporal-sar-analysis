@@ -191,65 +191,19 @@
         <div><span class="text-[var(--outline)] text-xs block">Analyzed At</span><span class="mono" id="resultTimestamp">—</span></div>
         <div><span class="text-[var(--outline)] text-xs block">Model</span><span class="mono">Simple Transformer v1</span></div>
         <div>
-      {% if terrain %}
-<!-- Land Classification -->
-<div class="glass rounded-xl p-5">
-  <div class="flex items-center justify-between mb-1">
-    <h4 class="text-xs font-bold uppercase tracking-widest text-[var(--primary)]">Land Use Classification</h4>
-    <span class="text-[10px] text-[var(--outline)] italic">Estimated — unsupervised, not model-validated</span>
-  </div>
-  <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 items-center mt-4">
-    <div class="flex justify-center">
-      <canvas id="terrainChart" width="220" height="220"></canvas>
-    </div>
-    <div class="space-y-3">
-      {% for label, pct in terrain.items() %}
-      <div class="flex items-center justify-between text-sm">
-        <div class="flex items-center gap-2">
-          <span class="w-3 h-3 rounded-full" style="background:{{ {'Water':'#00dbe9','Vegetation':'#4fdbc8','Urban':'#ffb690','Bare Soil':'#c9a66b'}[label] }}"></span>
-          <span>{{ label }}</span>
-        </div>
-        <span class="mono text-[var(--on-surface-variant)]">{{ pct }}%</span>
-      </div>
-      {% endfor %}
-    </div>
-  </div>
-</div>
-
-<script>
-  const terrainData = {{ terrain|tojson }};
-  const terrainColors = {
-    "Water": "#00dbe9",
-    "Vegetation": "#4fdbc8",
-    "Urban": "#ffb690",
-    "Bare Soil": "#c9a66b"
-  };
-  new Chart(document.getElementById('terrainChart').getContext('2d'), {
-    type: 'pie',
-    data: {
-      labels: Object.keys(terrainData),
-      datasets: [{
-        data: Object.values(terrainData),
-        backgroundColor: Object.keys(terrainData).map(k => terrainColors[k]),
-        borderColor: '#0b1326',
-        borderWidth: 2
-      }]
-    },
-    options: {
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          callbacks: { label: (ctx) => `${ctx.label}: ${ctx.parsed}%` }
-        }
-      }
-    }
-  });
-</script>
-{% endif %}
           <span class="text-[var(--outline)] text-xs block">Status</span>
           <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-[var(--secondary)]"></span>Completed</span>
         </div>
       </div>
+
+      {% if terrain %}
+      <div class="mt-5 pt-5 border-t border-[var(--outline-variant)]">
+        <button id="openTerrainModalBtn" type="button" class="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-[var(--outline-variant)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-all text-sm font-bold">
+          <span class="material-symbols-outlined text-base">terrain</span>
+          View Land Use Classification
+        </button>
+      </div>
+      {% endif %}
     </div>
 
     <!-- Footer actions -->
@@ -265,6 +219,37 @@
   </div>
 </main>
 
+{% if terrain %}
+<!-- Land Classification Modal -->
+<div id="terrainModalOverlay" class="hidden fixed inset-0 z-[60] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+  <div class="glass rounded-xl w-full max-w-lg p-5 sm:p-6 relative">
+    <button id="closeTerrainModalBtn" type="button" aria-label="Close" class="absolute top-4 right-4 text-[var(--on-surface-variant)] hover:text-[var(--primary)] transition-colors">
+      <span class="material-symbols-outlined">close</span>
+    </button>
+    <div class="flex items-center justify-between mb-1 pr-8">
+      <h4 class="text-xs font-bold uppercase tracking-widest text-[var(--primary)]">Land Use Classification</h4>
+    </div>
+    <span class="text-[10px] text-[var(--outline)] italic">Estimated — unsupervised, not model-validated</span>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 items-center mt-4">
+      <div class="flex justify-center">
+        <canvas id="terrainChart" width="220" height="220"></canvas>
+      </div>
+      <div class="space-y-3">
+        {% for label, pct in terrain.items() %}
+        <div class="flex items-center justify-between text-sm">
+          <div class="flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full" style="background:{{ {'Water':'#00dbe9','Vegetation':'#4fdbc8','Urban':'#ffb690','Bare Soil':'#c9a66b'}[label] }}"></span>
+            <span>{{ label }}</span>
+          </div>
+          <span class="mono text-[var(--on-surface-variant)]">{{ pct }}%</span>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
 <script>
   // Mobile sidebar toggle
   const sidebar = document.getElementById('sidebar');
@@ -276,6 +261,60 @@
   }
   menuBtn.addEventListener('click', () => toggleSidebar(!sidebar.classList.contains('open')));
   overlay.addEventListener('click', () => toggleSidebar(false));
+
+  // Land Use Classification modal — chart is built lazily on first open,
+  // since Chart.js sizes a canvas incorrectly if it's rendered while hidden.
+  (function setupTerrainModal(){
+    const openBtn = document.getElementById('openTerrainModalBtn');
+    if (!openBtn) return; // no terrain data for this result
+
+    const modalOverlay = document.getElementById('terrainModalOverlay');
+    const closeBtn = document.getElementById('closeTerrainModalBtn');
+    let chartBuilt = false;
+
+    function buildChartOnce(){
+      if (chartBuilt) return;
+      chartBuilt = true;
+      const terrainData = {{ terrain|tojson if terrain else '{}' }};
+      const terrainColors = {
+        "Water": "#00dbe9",
+        "Vegetation": "#4fdbc8",
+        "Urban": "#ffb690",
+        "Bare Soil": "#c9a66b"
+      };
+      new Chart(document.getElementById('terrainChart').getContext('2d'), {
+        type: 'pie',
+        data: {
+          labels: Object.keys(terrainData),
+          datasets: [{
+            data: Object.values(terrainData),
+            backgroundColor: Object.keys(terrainData).map(k => terrainColors[k]),
+            borderColor: '#0b1326',
+            borderWidth: 2
+          }]
+        },
+        options: {
+          plugins: {
+            legend: { display: false },
+            tooltip: { callbacks: { label: (ctx) => `${ctx.label}: ${ctx.parsed}%` } }
+          }
+        }
+      });
+    }
+
+    function openModal(){
+      modalOverlay.classList.remove('hidden');
+      buildChartOnce();
+    }
+    function closeModal(){
+      modalOverlay.classList.add('hidden');
+    }
+
+    openBtn.addEventListener('click', openModal);
+    closeBtn.addEventListener('click', closeModal);
+    modalOverlay.addEventListener('click', (e) => { if (e.target === modalOverlay) closeModal(); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
+  })();
 
   // The only place Flood vs. No-Flood is branched on is here in JS —
   // the markup above stays the same regardless of outcome.
