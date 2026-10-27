@@ -191,23 +191,6 @@ under server-chosen names, and errors are shown as plain messages.
 Screenshots: none are included yet, because none could be captured in the build environment.
 Add your own to `docs/images/` once the dashboard is running on your machine.
 
-## What changed from the original project
-
-The audit ([docs/PROJECT_AUDIT.md](docs/PROJECT_AUDIT.md)) found, among other things:
-
-1. **Inverted labels** — `LabelEncoder` mapped "Flood"→0, "NoFlood"→1 and later code treated 1 as
-   flood, so the deployed model answered "is this chip dry?".
-2. **NaN handling** — one no-data pixel turned the whole chip into NaN; 45 such chips were later
-   deleted as "corrupted".
-3. **Leakage** — a classifier evaluated on its own training features; test sets used as
-   validation; the deployed model trained on all data.
-4. **Model would not load** on Python 3.13 (pickled `Lambda` → segfault).
-5. **Dashboard showed fabricated numbers** (data volumes, alerts, satellite passes).
-
-The new version keeps the notebooks, the three saved models and the autoencoder idea, and moves
-the task to what the labels support: **per-pixel water segmentation**. Nothing in Sen1Floods11's
-hand-labelled set is time-indexed, so nothing here is claimed to be spatio-temporal.
-
 ## Limitations
 
 - No real-data training or evaluation has been run yet (data access).
