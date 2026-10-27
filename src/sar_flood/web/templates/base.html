@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% block title %}SAR water mapping{% endblock %} · Sen1Floods11</title>
+  <title>{% block title %}Dashboard{% endblock %} · SAR Flood Intelligence</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -19,7 +19,7 @@
           <rect x="1" y="1" width="30" height="30" rx="3" fill="none" stroke="currentColor" stroke-width="2"/>
           <path d="M1 20c5-4 9 3 15-1s10-2 15 1v10H1z" fill="var(--water)"/>
         </svg>
-        <span>SAR water mapping</span>
+        <span>SAR Flood Intelligence</span>
       </a>
       <nav aria-label="Main">
         <a href="{{ url_for('overview') }}" {% if active == 'overview' %}aria-current="page"{% endif %}>Overview</a>

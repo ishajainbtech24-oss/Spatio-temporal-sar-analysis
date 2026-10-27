@@ -1,93 +1,338 @@
 {% extends "base.html" %}
-{% block title %}Result · {{ r.input }}{% endblock %}
+{% from "_icons.html" import icon %}
+{% block title %}Analysis {{ rid[:8] }}{% endblock %}
 {% block head %}
-  {% if r.map %}
+  {% if r.map and v.methods %}
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
   {% endif %}
 {% endblock %}
-{% macro img(name, alt) -%}
-  <img src="{{ url_for('result_file', rid=rid, name=name) }}" alt="{{ alt }}" loading="lazy">
+
+{% macro file_url(name) -%}{{ url_for('result_file', rid=rid, name=name) }}{%- endmacro %}
+
+{% macro frame(name, alt, caption, layer=None) -%}
+<figure class="frame">
+  <div class="frame__img">
+    {% if name %}
+      <img src="{{ file_url(name) }}" alt="{{ alt }}" loading="lazy" data-fallback>
+      {% if layer %}<img class="frame__layer" src="{{ file_url(layer) }}" alt="" aria-hidden="true" data-fallback-hide>{% endif %}
+      <a class="frame__expand" href="{{ file_url(name) }}" data-lightbox data-caption="{{ caption }}"{% if layer %} data-layer="{{ file_url(layer) }}"{% endif %} aria-label="View {{ caption }} full size">{{ icon("expand") }}</a>
+    {% endif %}
+    <div class="frame__empty" {% if name %}hidden{% endif %}>{{ icon("info") }}<span>Not available for this input</span></div>
+  </div>
+  <figcaption>{{ caption }}</figcaption>
+</figure>
 {%- endmacro %}
+
 {% block content %}
-<div class="result-head">
-  <div>
-    <h1 class="page-title">{{ r.input }}</h1>
-    <p class="meta-line">{{ r.width }}×{{ r.height }} px, {{ r.bands }} band{{ 's' if r.bands > 1 }}{% if r.nodata_fraction %}, {{ r.nodata_fraction | pct }} no data{% endif %}{% if not r.calibrated_db %}, <span class="tag tag--warn">uncalibrated input</span>{% endif %}</p>
-  </div>
-  <a class="btn" href="{{ url_for('analyze_form') }}">Analyse another</a>
-</div>
-
-{% for w in r.warnings %}<div class="notice notice--warn">{{ w }}</div>{% endfor %}
-
-<section class="sheet" aria-label="Input">
-  <h2>Input</h2>
-  <div class="tiles">
-    <figure>{{ img(r.images.vv, 'VV backscatter') }}<figcaption>{{ 'VV backscatter (−25…0 dB)' if r.calibrated_db else 'Input (grey levels)' }}</figcaption></figure>
-    {% if r.images.vh %}<figure>{{ img(r.images.vh, 'VH backscatter') }}<figcaption>VH backscatter (−32…−5 dB)</figcaption></figure>{% endif %}
-    {% if r.images.false_colour %}<figure>{{ img(r.images.false_colour, 'False colour composite') }}<figcaption>False colour: R VV, G VH, B VV−VH. Water is dark blue.</figcaption></figure>{% endif %}
-    {% if r.images.ground_truth %}<figure>{{ img(r.images.ground_truth, 'Ground truth') }}<figcaption>Ground truth</figcaption></figure>{% endif %}
-  </div>
-  <ul class="legend" aria-label="Legend">
-    <li><i class="sw sw--water"></i>water</li>
-    <li><i class="sw sw--land"></i>not water</li>
-    <li><i class="sw sw--ignore"></i>no data / unlabelled</li>
-    {% if r.images.ground_truth %}<li><i class="sw sw--fp"></i>false alarm</li><li><i class="sw sw--fn"></i>missed water</li>{% endif %}
-  </ul>
-</section>
-
-{% for key, m in r.methods.items() %}
-<section class="sheet method">
-  <div class="method__head">
-    <h2>{{ m.title }}</h2>
-    {% if m.trained_on == 'synthetic' %}<span class="tag tag--warn">checkpoint trained on synthetic data</span>{% endif %}
-  </div>
-  <div class="method__body">
-    <div class="tiles tiles--tight">
-      <figure>{{ img(m.overlay, m.title ~ ' overlay') }}<figcaption>Prediction over input</figcaption></figure>
-      <figure>{{ img(m.mask, m.title ~ ' mask') }}<figcaption>Predicted mask</figcaption></figure>
-      {% if m.agreement %}<figure>{{ img(m.agreement, m.title ~ ' agreement') }}<figcaption>Agreement with ground truth</figcaption></figure>{% endif %}
-      {% if m.probability %}<figure>{{ img(m.probability, m.title ~ ' probability') }}<figcaption>Water probability (dark → bright)</figcaption></figure>{% endif %}
+<header class="rx-head">
+  <div class="rx-head__main">
+    <a class="rx-back" href="{{ url_for('overview') }}">{{ icon("back") }}Back to dashboard</a>
+    <h1 class="page-title">Flood Detection Analysis</h1>
+    <div class="rx-scene">
+      <span class="status status--{{ v.status.code }}">
+        {{ icon("x" if v.status.code == "failed" else ("alert" if v.status.code == "warning" else "check")) }}{{ v.status.label }}
+      </span>
+      <span title="Analysis ID {{ rid }}">Run <code>{{ rid[:8] }}</code></span>
+      {% if r.created %}<span><time datetime="{{ r.created }}">{{ r.created | replace("T", " ") | replace("Z", " UTC") }}</time></span>{% endif %}
+      {% if r.input %}<span class="rx-scene__file">{{ r.input }}</span>{% endif %}
     </div>
-    <dl class="stats">
-      <dt>Water fraction</dt><dd>{{ m.water_fraction | pct }}</dd>
-      {% if m.threshold is defined %}<dt>Decision threshold</dt><dd>{{ m.threshold | num(2) }}</dd>{% endif %}
-      {% if m.threshold_db is defined %}<dt>VV threshold</dt><dd>{{ m.threshold_db }} dB</dd>{% endif %}
-      {% if m.threshold_grey is defined %}<dt>Grey threshold</dt><dd>{{ m.threshold_grey }}</dd>{% endif %}
-      {% if m.metrics %}
-        <dt>IoU</dt><dd>{{ m.metrics.iou | num }}</dd>
-        <dt>Dice / F1</dt><dd>{{ m.metrics.dice_f1 | num }}</dd>
-        <dt>Precision</dt><dd>{{ m.metrics.precision | num }}</dd>
-        <dt>Recall</dt><dd>{{ m.metrics.recall | num }}</dd>
-      {% endif %}
-      {% if m.geotiff %}<dt>Download</dt><dd><a href="{{ url_for('result_file', rid=rid, name=m.geotiff) }}">mask GeoTIFF</a></dd>{% endif %}
-    </dl>
   </div>
+  <div class="rx-head__actions">
+    {% if v.status.code != "failed" %}
+      <a class="btn" href="{{ url_for('result_report', rid=rid) }}">{{ icon("download") }}Download report</a>
+    {% endif %}
+    <a class="btn btn--primary" href="{{ url_for('analyze_form') }}">New analysis</a>
+  </div>
+</header>
+
+{% if v.status.code == "failed" %}
+  <section class="panel rx-failed" role="alert">
+    {{ icon("x", "ico ico--lg") }}
+    <div>
+      <h2>This analysis did not complete</h2>
+      <p>The server hit an unexpected error ({{ r.error_type or "unknown error" }}) while processing <strong>{{ r.input }}</strong>. No masks or statistics were produced. The details are in the server log.</p>
+      <p>Check that the file is a Sentinel-1 GeoTIFF (VV, VH in dB) or a PNG/JPEG, then try again.</p>
+      <p><a class="btn btn--primary" href="{{ url_for('analyze_form') }}">Try another file</a></p>
+    </div>
+  </section>
+{% else %}
+
+{% for w in r.warnings %}<div class="notice notice--warn">{{ icon("alert") }}<span>{{ w }}</span></div>{% endfor %}
+
+{% if v.methods | length > 1 %}
+<div class="seg" role="tablist" aria-label="Detection method">
+  {% for m in v.methods %}
+    <button class="seg__btn" role="tab" id="tab-{{ m.key }}" aria-controls="method-{{ m.key }}"
+            aria-selected="{{ 'true' if m.key == v.primary else 'false' }}" tabindex="{{ 0 if m.key == v.primary else -1 }}"
+            data-method="{{ m.key }}">{{ m.short }}{% if m.key == v.primary %}<span class="seg__hint"> · default</span>{% endif %}</button>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% for m in v.methods %}
+<section class="rx-method" id="method-{{ m.key }}" data-method="{{ m.key }}" {% if v.methods | length > 1 %}role="tabpanel" aria-labelledby="tab-{{ m.key }}"{% endif %} {% if m.key != v.primary %}hidden{% endif %}>
+  <h2 class="visually-hidden">{{ m.title }}</h2>
+
+  {# ---------------------------------------------------------------- KPI strip #}
+  <div class="kpis" aria-label="Prediction summary for {{ m.title }}">
+    {% if m.has_counts and m.water_pct is not none %}
+    <div class="kpi kpi--water">
+      <span class="kpi__label">{{ icon("drop") }}Water-covered</span>
+      <span class="kpi__value">{{ "%.1f" | format(m.water_pct) }}<small>%</small></span>
+      <span class="kpi__sub">of valid pixels</span>
+    </div>
+    <div class="kpi kpi--dry">
+      <span class="kpi__label">{{ icon("land") }}Not water</span>
+      <span class="kpi__value">{{ "%.1f" | format(m.dry_pct) }}<small>%</small></span>
+      <span class="kpi__sub">of valid pixels</span>
+    </div>
+    <div class="kpi">
+      <span class="kpi__label">{{ icon("grid") }}Valid pixels analysed</span>
+      <span class="kpi__value">{{ m.counts.valid | commas }}</span>
+      <span class="kpi__sub">{{ m.counts.nodata | commas }} no-data excluded</span>
+    </div>
+    <div class="kpi">
+      <span class="kpi__label">{{ icon("pixels") }}Water pixels</span>
+      <span class="kpi__value">{{ m.counts.water | commas }}</span>
+      <span class="kpi__sub">{% if m.area %}≈ {{ m.area.water | area }}{% else %}area needs georeferencing{% endif %}</span>
+    </div>
+    {% else %}
+    <div class="kpi kpi--empty">
+      <span class="kpi__label">{{ icon("info") }}Pixel statistics unavailable</span>
+      <span class="kpi__sub">{% if m.has_counts %}The image has no valid pixels.{% else %}This result predates stored pixel counts and its mask could not be re-read. Run the analysis again.{% endif %}</span>
+    </div>
+    {% endif %}
+    <div class="kpi kpi--model">
+      <span class="kpi__label">{{ icon("chip") }}Method</span>
+      <span class="kpi__value kpi__value--text">{{ m.short }}</span>
+      <span class="kpi__sub">
+        {% if m.inference_ms is defined %}Ran in {{ m.inference_ms }} ms{% else %}Completed{% endif %}
+        {% if m.trained_on == "synthetic" %}<span class="tag tag--warn">synthetic-trained</span>{% endif %}
+      </span>
+    </div>
+  </div>
+
+  {% if m.has_counts and m.water_pct is not none %}
+  <div class="rx-grid rx-grid--2">
+    {# ------------------------------------------------------------ doughnut #}
+    <section class="panel">
+      <h3 class="panel__title">Land classification breakdown</h3>
+      <div class="donut-wrap">
+        {% set d = m.donut %}
+        <svg class="donut" viewBox="0 0 180 180" role="img" aria-label="{{ '%.1f' | format(m.water_pct) }} percent water, {{ '%.1f' | format(m.dry_pct) }} percent not water, of {{ m.counts.valid | commas }} valid pixels">
+          <circle class="donut__track" cx="90" cy="90" r="{{ d.r }}" fill="none" stroke="#1b2a42" stroke-width="20"/>
+          {% if d.water_len > 0 %}
+          <circle class="donut__seg donut__seg--water" cx="90" cy="90" r="{{ d.r }}" fill="none" stroke="#ff7a66" stroke-width="20"
+                  stroke-dasharray="{{ d.water_len }} {{ d.c }}" transform="rotate(-90 90 90)"
+                  tabindex="0" data-tip="Water: {{ m.counts.water | commas }} px ({{ '%.2f' | format(m.water_pct) }}%)"><title>Water: {{ m.counts.water | commas }} px</title></circle>
+          {% endif %}
+          {% if d.dry_len > 0 %}
+          <circle class="donut__seg donut__seg--dry" cx="90" cy="90" r="{{ d.r }}" fill="none" stroke="#3cc6b0" stroke-width="20"
+                  stroke-dasharray="{{ d.dry_len }} {{ d.c }}" stroke-dashoffset="{{ -d.water_len }}" transform="rotate(-90 90 90)"
+                  tabindex="0" data-tip="Not water: {{ m.counts.non_water | commas }} px ({{ '%.2f' | format(m.dry_pct) }}%)"><title>Not water: {{ m.counts.non_water | commas }} px</title></circle>
+          {% endif %}
+          <text class="donut__num" x="90" y="88" text-anchor="middle" fill="#e4ebf5" font-size="19" font-weight="600">{{ m.counts.valid | commas }}</text>
+          <text class="donut__cap" x="90" y="108" text-anchor="middle" fill="#94a4ba" font-size="11">valid pixels</text>
+        </svg>
+        <div class="donut-tip" role="status" hidden></div>
+        <ul class="breakdown">
+          <li><i class="sw sw--water"></i><span>Water-covered</span><strong>{{ "%.1f" | format(m.water_pct) }}%</strong><small>{{ m.counts.water | commas }} px{% if m.area %} · {{ m.area.water | area }}{% endif %}</small></li>
+          <li><i class="sw sw--land"></i><span>Not water</span><strong>{{ "%.1f" | format(m.dry_pct) }}%</strong><small>{{ m.counts.non_water | commas }} px{% if m.area %} · {{ m.area.dry | area }}{% endif %}</small></li>
+          <li class="breakdown__muted"><i class="sw sw--ignore"></i><span>No data (excluded)</span><strong></strong><small>{{ m.counts.nodata | commas }} px</small></li>
+        </ul>
+      </div>
+    </section>
+
+    {# ------------------------------------------------------------ summary #}
+    <section class="panel">
+      <h3 class="panel__title">Flood prediction summary</h3>
+      <p class="big-pct"><span>{{ "%.1f" | format(m.water_pct) }}%</span> of the analysed area is classified as water</p>
+      <div class="split-bar" role="img" aria-label="{{ '%.1f' | format(m.water_pct) }}% water, {{ '%.1f' | format(m.dry_pct) }}% not water">
+        <span class="split-bar__water" style="width: {{ '%.3f' | format(m.water_pct) }}%"></span>
+        <span class="split-bar__dry" style="width: {{ '%.3f' | format(m.dry_pct) }}%"></span>
+      </div>
+      <div class="split-legend"><span>{{ "%.1f" | format(m.water_pct) }}% water</span><span>{{ "%.1f" | format(m.dry_pct) }}% not water</span></div>
+      <dl class="kv">
+        <dt>Water pixels</dt><dd>{{ m.counts.water | commas }}</dd>
+        <dt>Non-water pixels</dt><dd>{{ m.counts.non_water | commas }}</dd>
+        {% if m.area %}
+          <dt>Estimated water area</dt><dd>≈ {{ m.area.water | area }}</dd>
+          <dt>Area analysed</dt><dd>≈ {{ m.area.valid | area }}</dd>
+        {% endif %}
+        {% if r.ground_truth and r.ground_truth.valid %}
+          <dt>Ground-truth water</dt><dd>{{ "%.1f" | format(100 * r.ground_truth.water / r.ground_truth.valid) }}%</dd>
+        {% endif %}
+      </dl>
+      {% if m.metrics %}
+      <div class="metric-row" aria-label="Agreement with ground truth">
+        <div><span>IoU</span><strong>{{ m.metrics.iou | num }}</strong></div>
+        <div><span>Dice / F1</span><strong>{{ m.metrics.dice_f1 | num }}</strong></div>
+        <div><span>Precision</span><strong>{{ m.metrics.precision | num }}</strong></div>
+        <div><span>Recall</span><strong>{{ m.metrics.recall | num }}</strong></div>
+      </div>
+      {% endif %}
+      <p class="note">Share of valid pixels this method classifies as water — not a probability or model confidence. Water includes permanent rivers and lakes.{% if m.area %} Area uses the GeoTIFF's pixel size ({{ m.area.method }}).{% endif %}</p>
+    </section>
+  </div>
+  {% endif %}
+
+  {# ---------------------------------------------------------------- imagery #}
+  <section class="panel">
+    <div class="panel__head">
+      <h3 class="panel__title">Imagery comparison</h3>
+      {% if m.water_layer %}
+      <label class="opacity">Overlay opacity
+        <input type="range" min="0" max="100" value="60" data-opacity-for="{{ m.key }}">
+      </label>
+      {% endif %}
+    </div>
+    <div class="frames {% if v.has_ground_truth %}frames--4{% endif %}">
+      {{ frame(r.images.vv, "SAR input", "SAR input (VV)" if r.calibrated_db else "Input image") }}
+      {{ frame(m.mask, m.title ~ " mask", "Predicted water mask") }}
+      {% if m.water_layer %}
+        {{ frame(r.images.vv, m.title ~ " overlay", "Water overlay on SAR", m.water_layer) }}
+      {% else %}
+        {{ frame(m.overlay, m.title ~ " overlay", "Water overlay on SAR") }}
+      {% endif %}
+      {% if v.has_ground_truth %}{{ frame(r.images.ground_truth, "Ground truth", "Ground truth (reference)") }}{% endif %}
+    </div>
+    <ul class="legend" aria-label="Legend">
+      <li><i class="sw sw--water"></i>water</li>
+      <li><i class="sw sw--land"></i>not water</li>
+      <li><i class="sw sw--ignore"></i>no data / unlabelled</li>
+      {% if m.agreement %}<li><i class="sw sw--fp"></i>false alarm</li><li><i class="sw sw--fn"></i>missed water</li>{% endif %}
+    </ul>
+    {% set extra = [] %}
+    {% if r.images.vh %}{% set _ = extra.append((r.images.vh, "VH backscatter")) %}{% endif %}
+    {% if r.images.false_colour %}{% set _ = extra.append((r.images.false_colour, "False colour (R VV, G VH, B VV−VH)")) %}{% endif %}
+    {% if m.agreement %}{% set _ = extra.append((m.agreement, "Agreement with ground truth")) %}{% endif %}
+    {% if m.probability %}{% set _ = extra.append((m.probability, "Water probability (dark = low)")) %}{% endif %}
+    {% if extra %}
+    <details class="more">
+      <summary>More views ({{ extra | length }})</summary>
+      <div class="frames frames--small">
+        {% for name, cap in extra %}{{ frame(name, cap, cap) }}{% endfor %}
+      </div>
+    </details>
+    {% endif %}
+  </section>
+
+  {# ---------------------------------------------------------------- spatial #}
+  {% if m.grid %}
+  <section class="panel">
+    <h3 class="panel__title">Spatial distribution</h3>
+    <div class="spatial">
+      <div class="heat" style="grid-template-columns: repeat({{ m.grid.cols }}, 1fr)" role="img"
+           aria-label="Grid of {{ m.grid.rows }} by {{ m.grid.cols }} blocks showing the water share in each block">
+        {% for row in m.grid.cells %}{% set ri = loop.index %}{% for c in row %}
+          {% if c is none %}<span class="heat__cell heat__cell--na" title="Block {{ ri }},{{ loop.index }}: mostly no data"></span>
+          {% else %}<span class="heat__cell" style="background: rgba(255, 122, 102, {{ "%.3f" | format(0.06 + 0.94 * c) }})" title="Block {{ ri }},{{ loop.index }}: {{ '%.0f' | format(100 * c) }}% water"></span>{% endif %}
+        {% endfor %}{% endfor %}
+      </div>
+      <div class="spatial__text">
+        <p>Each block shows the share of its valid pixels classified as water, from 0 % (dark) to 100 % (coral). Hatched blocks are mostly no data.</p>
+        <div class="heat-scale" aria-hidden="true"><span>0%</span><i></i><span>100%</span></div>
+        {% if not r.map %}<p class="note">{{ icon("pin") }} No georeferencing in this file, so a map is not shown.</p>{% endif %}
+      </div>
+    </div>
+  </section>
+  {% endif %}
 </section>
 {% endfor %}
 
+{# -------------------------------------------------------------------- map #}
+{% if r.map and v.methods %}
+<section class="panel">
+  <h3 class="panel__title">{{ icon("pin") }}Geographic view</h3>
+  {% set layers = {} %}
+  {% for m in v.methods %}{% set _ = layers.update({m.key: file_url(m.water_layer or m.overlay)}) %}{% endfor %}
+  <div id="map" class="map" data-south="{{ r.map.south }}" data-west="{{ r.map.west }}" data-north="{{ r.map.north }}" data-east="{{ r.map.east }}"
+       data-layers='{{ layers | tojson }}' data-active="{{ v.primary }}"></div>
+  <p class="note">Water layer for the selected method, placed from the GeoTIFF's own georeferencing{% if not r.map.exact %} (approximate: the raster is not in geographic coordinates){% endif %}. Bounds {{ "%.4f" | format(r.map.south) }}…{{ "%.4f" | format(r.map.north) }}° N, {{ "%.4f" | format(r.map.west) }}…{{ "%.4f" | format(r.map.east) }}° E. Basemap © OpenStreetMap contributors.</p>
+</section>
+{% endif %}
+
+{# ----------------------------------------------------------------- legacy #}
 {% if r.legacy_classifier %}
-<section class="sheet">
-  <h2>Legacy scene classifier</h2>
-  <p>Chip-level answer from the original MobileNetV2 + transformer model: <strong>{{ r.legacy_classifier.label }}</strong>.</p>
+<section class="panel">
+  <h3 class="panel__title">Scene-level check (legacy model)</h3>
+  <p>The original MobileNetV2 + transformer classifier answers one question for the whole chip: <strong>{{ r.legacy_classifier.label }}</strong>.</p>
   <div class="meter" role="img" aria-label="Probability the chip contains no water: {{ r.legacy_classifier.p_no_water | pct }}">
     <span style="width: {{ (100 * r.legacy_classifier.p_no_water) | round(1) }}%"></span>
     <i style="left: {{ (100 * r.legacy_classifier.threshold_no_water) | round(1) }}%" title="decision threshold"></i>
   </div>
-  <p class="note">Probability the chip contains no water: {{ r.legacy_classifier.p_no_water | pct }} (threshold {{ r.legacy_classifier.threshold_no_water }}). The model was trained on every hand-labelled chip, so it has no held-out evaluation on this dataset.</p>
+  <p class="note">Probability the chip contains no water: {{ r.legacy_classifier.p_no_water | pct }} (threshold {{ r.legacy_classifier.threshold_no_water }}). Trained on every hand-labelled chip, so it has no held-out evaluation.</p>
 </section>
 {% endif %}
 
-{% if r.map %}
-<section class="sheet">
-  <h2>Location</h2>
-  {% set first = r.methods.values() | list | first %}
-  <div id="map" class="map" data-south="{{ r.map.south }}" data-west="{{ r.map.west }}" data-north="{{ r.map.north }}" data-east="{{ r.map.east }}" data-overlay="{{ url_for('result_file', rid=rid, name=first.overlay) }}"></div>
-  <p class="note">{{ first.title }} overlay placed from the GeoTIFF's georeferencing{% if not r.map.exact %} (approximate: the raster is not in geographic coordinates){% endif %}. Basemap © OpenStreetMap contributors.</p>
-</section>
+{# --------------------------------------------------------- technical details #}
+<details class="panel tech">
+  <summary><h3 class="panel__title">{{ icon("layers") }}Technical details</h3></summary>
+  <div class="rx-grid rx-grid--2">
+    <div>
+      <h4>Input</h4>
+      <dl class="kv">
+        <dt>File</dt><dd>{{ r.input }}</dd>
+        <dt>Format</dt><dd>{{ r.input_format or "—" }}</dd>
+        <dt>Dimensions</dt><dd>{{ r.width }} × {{ r.height }} px</dd>
+        <dt>Bands</dt><dd>{{ r.bands }}{% if r.band_names %} ({{ r.band_names | join(", ") }}){% endif %}</dd>
+        <dt>Calibrated dB</dt><dd>{{ "yes" if r.calibrated_db else "no" }}</dd>
+        <dt>CRS</dt><dd>{{ r.crs or "not georeferenced" }}</dd>
+        {% if r.pixel_area %}<dt>Pixel size</dt><dd>≈ {{ "%.1f" | format(r.pixel_area.x_m) }} × {{ "%.1f" | format(r.pixel_area.y_m) }} m</dd>{% endif %}
+        <dt>No-data pixels</dt><dd>{{ r.nodata_fraction | pct }}</dd>
+        {% if r.total_ms %}<dt>Total processing</dt><dd>{{ r.total_ms }} ms</dd>{% endif %}
+      </dl>
+      {% if r.preprocessing %}
+      <h4>Preprocessing</h4>
+      <ol class="plain">{% for step in r.preprocessing %}<li>{{ step }}</li>{% endfor %}</ol>
+      {% endif %}
+    </div>
+    <div>
+      {% for m in v.methods %}
+      <div class="tech__method" data-method="{{ m.key }}" {% if m.key != v.primary %}hidden{% endif %}>
+        <h4>{{ m.title }}</h4>
+        <dl class="kv">
+          {% if m.model and m.model.architecture %}<dt>Model</dt><dd>{{ m.model.architecture }}</dd>{% endif %}
+          <dt>Output</dt><dd>{{ m.output_type or "binary mask" }}</dd>
+          {% if m.model and m.model.checkpoint %}<dt>Checkpoint</dt><dd>{{ m.model.checkpoint }}</dd>{% endif %}
+          {% if m.model and m.model.encoder_init %}<dt>Encoder init</dt><dd>{{ m.model.encoder_init }}</dd>{% endif %}
+          {% if m.trained_on %}<dt>Training data</dt><dd>{{ m.trained_on }}</dd>{% endif %}
+          {% if m.model and m.model.get("val_iou") is not none %}<dt>Validation IoU</dt><dd>{{ m.model.val_iou | num }}</dd>{% endif %}
+          {% if m.threshold is defined %}<dt>Decision threshold</dt><dd>{{ m.threshold | num(2) }} (water probability)</dd>{% endif %}
+          {% if m.threshold_db is defined %}<dt>Threshold</dt><dd>{{ m.threshold_db }} dB (VV)</dd>{% endif %}
+          {% if m.threshold_grey is defined %}<dt>Threshold</dt><dd>{{ m.threshold_grey }} (grey level)</dd>{% endif %}
+          {% if m.inference_ms is defined %}<dt>Inference time</dt><dd>{{ m.inference_ms }} ms</dd>{% endif %}
+          <dt>Pixel counts</dt><dd>{{ m.counts_source }}</dd>
+          {% if m.geotiff %}<dt>Mask download</dt><dd><a href="{{ file_url(m.geotiff) }}">{{ icon("download") }}GeoTIFF (1 water, 0 not, 255 no data)</a></dd>{% endif %}
+        </dl>
+        {% if m.metrics %}
+        <h4>Evaluation against ground truth</h4>
+        <dl class="kv">
+          <dt>IoU</dt><dd>{{ m.metrics.iou | num }}</dd>
+          <dt>Dice / F1</dt><dd>{{ m.metrics.dice_f1 | num }}</dd>
+          <dt>Precision</dt><dd>{{ m.metrics.precision | num }}</dd>
+          <dt>Recall</dt><dd>{{ m.metrics.recall | num }}</dd>
+          <dt>Pixel accuracy</dt><dd>{{ m.metrics.pixel_accuracy | num }} <small>(inflated by the majority class)</small></dd>
+          <dt>Pixels compared</dt><dd>{{ m.metrics.valid_pixels | commas }}</dd>
+        </dl>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</details>
 {% endif %}
+
+<dialog class="lightbox" id="lightbox" aria-label="Full-size image">
+  <form method="dialog"><button class="lightbox__close" aria-label="Close">×</button></form>
+  <div class="lightbox__stage"><img alt=""><img class="lightbox__layer" alt="" hidden></div>
+  <p class="lightbox__cap"></p>
+</dialog>
 {% endblock %}
+
 {% block scripts %}
-  {% if r.map %}
+  <script src="{{ url_for('static', filename='js/result.js') }}" defer></script>
+  {% if r.map and v.methods %}
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <script src="{{ url_for('static', filename='js/map.js') }}" defer></script>
   {% endif %}

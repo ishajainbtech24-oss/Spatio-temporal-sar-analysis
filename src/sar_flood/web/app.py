@@ -2,7 +2,8 @@
 
 * /            overview, model status (what checkpoints exist and what they were trained on)
 * /analyze     upload a GeoTIFF/PNG (or pick a bundled sample) and run every available method
-* /results/id  quick-looks, masks, overlays, agreement maps, optional map view
+* /results/id  analysis dashboard: KPIs, class breakdown, imagery comparison, map, details
+* /results/id/report.pdf  PDF report built from the same view model
 * /evaluation  metrics read from outputs/eval/*/metrics.json + clearly separated history
 * /api/health  JSON status
 
@@ -34,12 +35,14 @@ from flask import (
     send_from_directory,
     url_for,
 )
+from jinja2 import Undefined
 from werkzeug.exceptions import HTTPException, RequestEntityTooLarge
 from werkzeug.utils import secure_filename
 
 from ..config import PROJECT_ROOT
 from ..inference.pipeline import ALLOWED_EXT, InputError, analyze_file
-from ..utils import get_logger, load_json
+from ..utils import get_logger, load_json, save_json, utc_now
+from .results import ResultNotFound, build_view, fmt_area, fmt_int
 
 log = get_logger("sar_flood.web")
 
@@ -169,11 +172,16 @@ def create_app(test_config: dict | None = None) -> Flask:
         except HTTPException:
             shutil.rmtree(work, ignore_errors=True)
             raise  # e.g. 413 upload too large -> handled below
-        except Exception:
-            shutil.rmtree(work, ignore_errors=True)
-            log.exception("analysis failed")
-            flash("Analysis failed unexpectedly. Check the server log for details.", "error")
-            return redirect(url_for("analyze_form"))
+        except Exception as exc:
+            # Keep a failed-run record (no traceback, no paths) so the failure has its own page.
+            log.exception("analysis %s failed", rid)
+            shutil.rmtree(inputs, ignore_errors=True)
+            save_json({"status": "failed", "created": utc_now(), "input": secure_filename(
+                           (request.files.get("image").filename if request.files.get("image")
+                            else request.form.get("sample", "")) or "unknown"),
+                       "error_type": type(exc).__name__, "methods": {}, "images": {}, "warnings": []},
+                      work / "result.json")
+            return redirect(url_for("result_page", rid=rid))
         log.info("analysis %s done: %s", rid, result["input"])
         return redirect(url_for("result_page", rid=rid))
 
@@ -220,10 +228,42 @@ def create_app(test_config: dict | None = None) -> Flask:
     def result_page(rid: str):
         if not RESULT_ID.match(rid):
             abort(404)
-        path = Path(app.config["WEB_RUNS_DIR"]) / rid / "result.json"
-        if not path.exists():
+        try:
+            view = build_view(Path(app.config["WEB_RUNS_DIR"]) / rid, rid)
+        except ResultNotFound:
+            return _missing_result(rid)
+        return render_template("result.html", v=view, r=view["r"], rid=rid, active="analyze",
+                               status=model_status())
+
+    @app.get("/results/<rid>/report.pdf")
+    def result_report(rid: str):
+        if not RESULT_ID.match(rid):
             abort(404)
-        return render_template("result.html", rid=rid, r=load_json(path), active="analyze")
+        run = Path(app.config["WEB_RUNS_DIR"]) / rid
+        try:
+            view = build_view(run, rid)
+        except ResultNotFound:
+            return _missing_result(rid)
+        if view["status"]["code"] == "failed":
+            abort(404)
+        pdf = run / "report.pdf"
+        if not pdf.exists() or pdf.stat().st_mtime < (run / "result.json").stat().st_mtime:
+            try:
+                from .report import build_report  # noqa: PLC0415
+
+                build_report(view, run, pdf)
+            except ImportError:
+                flash("PDF reports need the 'reportlab' package: pip install reportlab", "error")
+                return redirect(url_for("result_page", rid=rid))
+        return send_from_directory(run, "report.pdf", as_attachment=True,
+                                   download_name=f"flood-analysis-{rid[:8]}.pdf")
+
+    def _missing_result(rid: str):
+        return render_template(
+            "error.html", code=404, title="Analysis not found",
+            message="No stored analysis matches this ID. Results live in the server's outputs/web "
+                    "folder; they may have been deleted, or the link may be from another machine.",
+            action_url=url_for("analyze_form"), action_label="Run a new analysis"), 404
 
     @app.get("/results/<rid>/files/<name>")
     def result_file(rid: str, name: str):
@@ -259,13 +299,21 @@ def create_app(test_config: dict | None = None) -> Flask:
 
     @app.template_filter("pct")
     def pct(value, digits: int = 1):
-        if value is None:
+        if value is None or isinstance(value, Undefined):
             return "–"
         return f"{100 * float(value):.{digits}f}%"
 
+    @app.template_filter("commas")
+    def fmt_int_filter(value):
+        return fmt_int(None if isinstance(value, Undefined) else value)
+
+    @app.template_filter("area")
+    def fmt_area_filter(value):
+        return fmt_area(None if isinstance(value, Undefined) else value)
+
     @app.template_filter("num")
     def num(value, digits: int = 3):
-        if value is None:
+        if value is None or isinstance(value, Undefined):
             return "–"
         return f"{float(value):.{digits}f}"
 

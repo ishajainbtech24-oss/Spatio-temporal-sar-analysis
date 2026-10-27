@@ -18,7 +18,7 @@ def client(tmp_path, monkeypatch):
 def test_pages_render(client, url):
     r = client.get(url)
     assert r.status_code == 200
-    assert b"SAR water mapping" in r.data
+    assert b"SAR Flood Intelligence" in r.data
 
 
 def test_overview_states_no_checkpoint(client):
@@ -60,7 +60,7 @@ def test_sample_analysis_end_to_end(client):
     page = client.get(f"/results/{rid}")
     assert page.status_code == 200
     html = page.data.decode()
-    assert "Otsu threshold on VV" in html and "IoU" in html and "Location" in html
+    assert "Otsu threshold on VV" in html and "IoU" in html and "Geographic view" in html
     img = re.search(rf"/results/{rid}/files/([\w.\-]+\.png)", html).group(1)
     f = client.get(f"/results/{rid}/files/{img}")
     assert f.status_code == 200 and f.data[:4] == b"\x89PNG"

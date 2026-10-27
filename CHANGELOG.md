@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.3.0 — results dashboard redesign
+
+### Added
+- Results page rebuilt as an analysis dashboard: header with run ID, status, timestamp, back and report actions; method switcher; KPI strip; land-classification doughnut with keyboard-accessible tooltips; prediction summary with split bar, pixel counts, ground-truth share and IoU/Dice/precision/recall; imagery comparison (SAR, mask, overlay with opacity slider, ground truth) with full-size viewer and missing-image states; spatial water-share grid; map that follows the selected method; collapsible technical details.
+- `result.json` now stores per-method pixel counts, inference time, a spatial grid, transparent water layers, pixel size/area, model info and preprocessing steps. Older results are re-counted from their saved masks.
+- PDF report (`/results/<id>/report.pdf`, reportlab) built from the same view model as the page.
+- Failed analyses get their own page; missing result IDs get a specific 404.
+- 12 new tests (counts vs. GeoTIFF masks, page values, report, PNG/no-map, failures, old results, zero-water / zero-valid edge cases).
+
+### Changed
+- Dark theme across the dashboard; one colour code everywhere: coral = water, teal = not water, slate = no data (PNG quick-looks included).
+- Brand renamed to "SAR Flood Intelligence"; `reportlab` added as a dependency.
+
 ## 0.2.0 — portfolio-ready refactor (branch `improve/portfolio-ready`)
 
 ### Fixed

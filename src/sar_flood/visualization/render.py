@@ -1,4 +1,8 @@
-"""Quick-look rendering of SAR chips, masks and overlays (PNG) and mask export (GeoTIFF)."""
+"""Quick-look rendering of SAR chips, masks and overlays (PNG) and mask export (GeoTIFF).
+
+Colour meaning is fixed across PNGs, the dashboard and the PDF report:
+coral = water / flooded, teal = not water, slate = no data or unlabelled.
+"""
 
 from __future__ import annotations
 
@@ -6,11 +10,15 @@ from pathlib import Path
 
 import numpy as np
 
-WATER_RGB = (31, 111, 178)     # #1F6FB2
-LAND_RGB = (214, 200, 160)     # pale ochre
-IGNORE_RGB = (120, 120, 120)
-FP_RGB = (196, 74, 52)         # false alarm
-FN_RGB = (240, 180, 40)        # missed water
+PALETTE_VERSION = 2
+WATER_RGB = (255, 122, 102)    # coral  #FF7A66
+LAND_RGB = (38, 120, 110)      # teal, darkened so large land areas stay calm
+IGNORE_RGB = (52, 62, 78)      # slate
+FP_RGB = (242, 181, 68)        # false alarm (amber)
+FN_RGB = (110, 170, 255)       # missed water (sky blue)
+
+# Palette of results written before PALETTE_VERSION 2 (needed to re-count old PNG masks).
+LEGACY_PALETTE = {"water": (31, 111, 178), "land": (214, 200, 160), "ignore": (120, 120, 120)}
 
 
 def stretch_db(band: np.ndarray, lo: float = -25.0, hi: float = 0.0) -> np.ndarray:
@@ -27,7 +35,7 @@ def sar_grey(image_chw: np.ndarray, band: int = 0) -> np.ndarray:
 
 
 def sar_false_colour(image_chw: np.ndarray) -> np.ndarray:
-    """R = VV, G = VH, B = VV - VH (dB ratio). Water appears near-black."""
+    """R = VV, G = VH, B = VV - VH (dB ratio)."""
     if image_chw.shape[0] < 2:
         return sar_grey(image_chw)
     vv, vh = image_chw[0], image_chw[1]
@@ -59,8 +67,24 @@ def overlay(base_rgb: np.ndarray, mask: np.ndarray, alpha: float = 0.55) -> np.n
     return out.astype(np.uint8)
 
 
+def water_layer(mask: np.ndarray) -> np.ndarray:
+    """RGBA image: opaque coral where water, fully transparent elsewhere."""
+    out = np.zeros(mask.shape + (4,), dtype=np.uint8)
+    out[mask] = (*WATER_RGB, 255)
+    return out
+
+
+def probability_rgb(prob: np.ndarray) -> np.ndarray:
+    """0 -> deep navy, 0.5 -> coral, 1 -> pale peach."""
+    stops = np.array([[16, 26, 42], [255, 122, 102], [255, 228, 205]], dtype=np.float32)
+    p = np.clip(np.nan_to_num(prob), 0, 1)[..., None]
+    low = stops[0] + (stops[1] - stops[0]) * np.clip(p * 2, 0, 1)
+    high = stops[1] + (stops[2] - stops[1]) * np.clip(p * 2 - 1, 0, 1)
+    return np.where(p < 0.5, low, high).astype(np.uint8)
+
+
 def error_map(mask: np.ndarray, label: np.ndarray) -> np.ndarray:
-    """Agreement map: blue = hit, red = false alarm, amber = missed, grey = ignored."""
+    """Agreement map: coral = hit, amber = false alarm, blue = missed, slate = ignored."""
     out = label_rgb(np.where(label == 1, 0, label).astype(np.int8))
     out[(mask) & (label == 1)] = WATER_RGB
     out[(mask) & (label == 0)] = FP_RGB
@@ -69,6 +93,7 @@ def error_map(mask: np.ndarray, label: np.ndarray) -> np.ndarray:
 
 
 def save_png(rgb: np.ndarray, path: str | Path, upscale_to: int | None = 512) -> Path:
+    """Write RGB or RGBA uint8 as PNG; small images are upscaled by pixel repetition."""
     import cv2  # noqa: PLC0415
 
     path = Path(path)
@@ -77,7 +102,8 @@ def save_png(rgb: np.ndarray, path: str | Path, upscale_to: int | None = 512) ->
     if upscale_to and max(rgb.shape[:2]) < upscale_to:
         f = upscale_to // max(rgb.shape[:2])
         img = np.repeat(np.repeat(rgb, f, axis=0), f, axis=1)
-    if not cv2.imwrite(str(path), cv2.cvtColor(np.ascontiguousarray(img), cv2.COLOR_RGB2BGR)):
+    code = cv2.COLOR_RGBA2BGRA if img.shape[-1] == 4 else cv2.COLOR_RGB2BGR
+    if not cv2.imwrite(str(path), cv2.cvtColor(np.ascontiguousarray(img), code)):
         raise OSError(f"could not write {path}")
     return path
 

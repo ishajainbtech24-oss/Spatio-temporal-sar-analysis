@@ -1,14 +1,26 @@
-// Places the prediction overlay at the GeoTIFF's lat/lon bounds on an OSM basemap.
+// Geographic view: basemap + the selected method's water layer at the GeoTIFF's bounds.
 (function () {
   const el = document.getElementById("map");
-  if (!el || typeof L === "undefined") return;
+  if (!el) return;
+  if (typeof L === "undefined") {
+    el.innerHTML = '<p class="map__offline">The map library could not be loaded (offline?). The imagery panels above show the same result.</p>';
+    return;
+  }
   const b = [[+el.dataset.south, +el.dataset.west], [+el.dataset.north, +el.dataset.east]];
+  const layers = JSON.parse(el.dataset.layers || "{}");
   const map = L.map(el, { scrollWheelZoom: false });
   L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
     maxZoom: 18,
     attribution: "&copy; OpenStreetMap contributors",
   }).addTo(map);
-  L.imageOverlay(el.dataset.overlay, b, { opacity: 0.8 }).addTo(map);
-  L.rectangle(b, { color: "#1f6fb2", weight: 1, fill: false }).addTo(map);
-  map.fitBounds(b, { padding: [20, 20] });
+  L.rectangle(b, { color: "#8ec5ff", weight: 1, fill: false, dashArray: "4 3" }).addTo(map);
+  let overlay = null;
+  function show(key) {
+    if (!layers[key]) return;
+    if (overlay) map.removeLayer(overlay);
+    overlay = L.imageOverlay(layers[key], b, { opacity: 0.85 }).addTo(map);
+  }
+  show(el.dataset.active);
+  map.fitBounds(b, { padding: [24, 24] });
+  document.addEventListener("method:change", (e) => show(e.detail));
 })();

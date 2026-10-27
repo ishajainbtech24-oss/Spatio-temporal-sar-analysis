@@ -46,6 +46,7 @@ class Segmenter:
                 "(see README) or point --run-dir to an existing run."
             )
         meta = load_json(meta_path)
+        meta["run_name"] = run_dir.name
         cfg = load_config(run_dir / "config.yaml")
         model = keras.models.load_model(ckpt, compile=False)
         return cls(model=model, cfg=cfg, threshold=float(meta.get("threshold", 0.5)), metadata=meta)

@@ -132,6 +132,10 @@ flowchart LR
   U -->|GET /evaluation| EV[reads outputs/eval/*/metrics.json]
 ```
 
+* Results page: `web/results.py` turns `result.json` into one view model used by both the HTML
+  page and the PDF report (`web/report.py`), so they always show the same numbers. Pixel counts,
+  fractions, areas and the spatial grid are computed by `inference/pipeline.py` from the binary
+  masks; results from before this was stored are re-counted from the saved mask files.
 * Uploads: extension allow-list, `MAX_CONTENT_LENGTH`, server-chosen file names, content is
   parsed by rasterio/OpenCV and rejected with a readable message if invalid.
 * Result and file routes accept only a 32-hex id and plain file names (no path traversal).
