@@ -28,6 +28,7 @@ from ..evaluation.baselines import fixed_threshold_water, otsu_water
 from ..evaluation.metrics import Confusion
 from ..utils import get_logger, save_json, utc_now
 from ..visualization import render
+from . import landcover
 
 log = get_logger(__name__)
 
@@ -239,7 +240,18 @@ def analyze_file(image_path: str | Path, out_dir: str | Path, label_path: str | 
                  "mask": render.save_png(render.mask_rgb(mask, valid), out_dir / f"{name}_mask.png").name,
                  "overlay": render.save_png(render.overlay(base, mask), out_dir / f"{name}_overlay.png").name,
                  "water_layer": render.save_png(render.water_layer(mask), out_dir / f"{name}_water.png").name,
-                 "grid": spatial_grid(mask, valid)}
+                 "grid": spatial_grid(mask, valid),
+                 "verdict": landcover.flood_verdict(counts)}
+        if calibrated and image.shape[0] >= 2:
+            classes = landcover.classify_land(image, mask, valid, 3)
+            lc_counts = landcover.land_counts(classes)
+            entry["land_cover"] = {
+                "counts": lc_counts,
+                "map": render.save_png(landcover.land_rgb(classes), out_dir / f"{name}_landcover.png").name,
+                "rules": landcover.RULES,
+                "screening": landcover.plantation_screening(
+                    lc_counts, (entry["verdict"] or {}).get("flooded")),
+            }
         if prob is not None:
             entry["probability"] = render.save_png(render.probability_rgb(prob), out_dir / f"{name}_prob.png").name
             entry["output_type"] = "probability map, thresholded"
@@ -317,6 +329,13 @@ def analyze_file(image_path: str | Path, out_dir: str | Path, label_path: str | 
             log.exception("legacy classifier failed")
             result["warnings"].append(f"Legacy classifier failed: {type(exc).__name__}")
 
+    if not calibrated or image.shape[0] < 2:
+        result["land_cover_unavailable"] = (
+            "Land-surface screening needs a calibrated Sentinel-1 GeoTIFF with both VV and VH bands.")
+    for entry in result["methods"].values():
+        if entry.get("verdict"):
+            entry["verdict"]["legacy_agrees"] = landcover.legacy_agreement(
+                entry["verdict"], result.get("legacy_classifier"))
     result["primary_method"] = "unet" if "unet" in result["methods"] else next(iter(result["methods"]))
     result["map"] = bounds
     result["total_ms"] = round((time.perf_counter() - t_start) * 1000, 1)

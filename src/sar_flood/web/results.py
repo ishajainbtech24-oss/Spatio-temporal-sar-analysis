@@ -14,6 +14,7 @@ from pathlib import Path
 
 import numpy as np
 
+from ..inference import landcover
 from ..utils import get_logger, load_json
 from ..visualization import render
 
@@ -94,6 +95,24 @@ def method_counts(run_dir: Path, result: dict, method: dict) -> tuple[dict | Non
 
 
 # ----------------------------------------------------------------------------- view model
+def donut_segments(parts: list[tuple[str, str, int, str]], total: int) -> list[dict]:
+    """(key, label, count, colour) -> SVG dash lengths/offsets for a ring of radius DONUT_R."""
+    segs, offset = [], 0.0
+    for key, label, count, colour in parts:
+        if count <= 0 or total <= 0:
+            continue
+        length = DONUT_C * count / total
+        segs.append({"key": key, "label": label, "count": count, "pct": 100.0 * count / total,
+                     "colour": colour, "len": length, "offset": -offset})
+        offset += length
+    return segs
+
+
+def _hex(rgb) -> str:
+    r, g, b = rgb
+    return f"#{r:02x}{g:02x}{b:02x}"
+
+
 def _fmt_area(m2: float) -> dict:
     return {"m2": m2, "ha": m2 / 1e4, "km2": m2 / 1e6}
 
@@ -117,6 +136,18 @@ def method_view(run_dir: Path, result: dict, key: str, m: dict) -> dict:
                             "method": pa.get("method")}
     else:
         view["water_pct"] = view["dry_pct"] = None
+    view["verdict"] = m.get("verdict") or landcover.flood_verdict(counts)
+    if view["verdict"] is not None and "legacy_agrees" not in view["verdict"]:
+        view["verdict"] = {**view["verdict"], "legacy_agrees": landcover.legacy_agreement(
+            view["verdict"], result.get("legacy_classifier"))}
+    lc = m.get("land_cover")
+    if lc and lc.get("counts", {}).get("valid"):
+        c = lc["counts"]
+        parts = [(k, landcover.CLASS_LABELS[k], c[k], _hex(landcover.CLASS_RGB[k]))
+                 for k in ("water", "vegetation", "bare", "built")]
+        view["land"] = {**lc, "segments": donut_segments(parts, c["valid"]),
+                        "rows": [{"key": k, "label": lab, "count": n, "colour": col,
+                                  "pct": 100.0 * n / c["valid"]} for k, lab, n, col in parts]}
     return view
 
 

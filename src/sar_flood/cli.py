@@ -86,6 +86,11 @@ def cmd_predict(args) -> int:
         line = f"{name:6s} water fraction {m['water_fraction']:.3f}"
         if "metrics" in m:
             line += f"  IoU {m['metrics']['iou']:.3f}"
+        if m.get("verdict"):
+            line += f"  -> {m['verdict']['label']}"
+        sc = (m.get("land_cover") or {}).get("screening")
+        if sc:
+            line += f"  | plantation screening: {sc['label']}"
         print(line)
     if "legacy_classifier" in res:
         print("legacy:", res["legacy_classifier"])

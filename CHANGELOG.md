@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.4.0 — flood verdict and land-cover / plantation screening
+
+### Added
+- **Flood prediction verdict** per method ("Flood-affected" / "No flood water detected"), using notebook 02's definition (a chip is "Flood" when it contains water) with a 1 % minimum water share, plus a check against the original scene classifier.
+- **Land cover & vegetation analysis** (`inference/landcover.py`): rule-based classes from VV/VH backscatter (water from the method's mask; built-up VV ≥ −6 dB; vegetation VH ≥ −19 dB; bare/sparse otherwise), a second doughnut chart, a land-cover map and the rules shown on the page.
+- **Plantation screening (indicative)**: "Potentially suitable — survey recommended" / "Not suitable" / "Inconclusive" from the land-cover shares, with the criteria and caveats displayed. Not a trained model; the notebooks contain no vegetation or plantation model and Sen1Floods11 has no land-cover labels.
+- Verdicts and the land-cover table in the PDF report and `sar-flood predict` output; 11 new tests.
+
 ## 0.3.0 — results dashboard redesign
 
 ### Added

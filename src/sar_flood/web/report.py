@@ -100,6 +100,35 @@ def build_report(view: dict, run_dir: Path, out_path: Path) -> Path:
             story += [Spacer(1, 6), grid,
                       Paragraph("Colours: coral = water, teal = not water, slate = no data.", small)]
 
+    if primary and (primary.get("verdict") or primary.get("land")):
+        story.append(Paragraph("Verdicts", h2))
+        vd = primary.get("verdict")
+        if vd:
+            agree = vd.get("legacy_agrees")
+            colour = CORAL if vd["flooded"] else TEAL
+            story.append(Paragraph(_t(
+                f"<b>Flood prediction: <font color='{colour}'>{vd['label']}</font></b> - "
+                f"{100 * vd['water_fraction']:.1f} % of valid pixels water-covered. {vd['rule']}"
+                + ("" if agree is None else
+                   f" The original scene classifier {'agrees' if agree else 'disagrees'}.")), body))
+        land = primary.get("land")
+        if land:
+            sc = land.get("screening") or {}
+            if sc:
+                story.append(Paragraph(_t(f"<b>Plantation screening (indicative): {sc['label']}</b> - "
+                                          f"{sc['reason']} {' '.join(sc.get('notes', []))}"), body))
+            rows = [["Land cover (rule-based)", "Share", "Pixels"]] + [
+                [row["label"], f"{row['pct']:.1f} %", fmt_int(row["count"])] for row in land["rows"]]
+            story += [Spacer(1, 4), table(rows, [70 * mm, 30 * mm, 40 * mm]),
+                      Paragraph(_t("Rules: " + "; ".join(land.get("rules", []))), small)]
+            if sc:
+                story.append(Paragraph(_t("Screening criteria: " + "; ".join(sc.get("criteria", []))
+                                          + ". " + sc.get("caveat", "")), small))
+            if land.get("map") and (run_dir / land["map"]).exists():
+                story += [Spacer(1, 4), Image(str(run_dir / land["map"]), width=40 * mm, height=40 * mm),
+                          Paragraph("Land-cover map: coral water, green vegetation, ochre bare/sparse, "
+                                    "lilac built-up, slate no data.", small)]
+
     if view["methods"]:
         has_gt = any(m.get("metrics") for m in view["methods"])
         head = ["Method", "Water %", "Water px", "Valid px", "Water area"] + (["IoU", "Dice", "Precision", "Recall"] if has_gt else [])

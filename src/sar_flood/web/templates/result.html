@@ -73,6 +73,38 @@
 <section class="rx-method" id="method-{{ m.key }}" data-method="{{ m.key }}" {% if v.methods | length > 1 %}role="tabpanel" aria-labelledby="tab-{{ m.key }}"{% endif %} {% if m.key != v.primary %}hidden{% endif %}>
   <h2 class="visually-hidden">{{ m.title }}</h2>
 
+  {# ---------------------------------------------------------------- verdicts #}
+  {% set sc = m.land.screening if m.land else none %}
+  <div class="verdicts">
+    {% if m.verdict %}
+    <section class="verdict verdict--{{ 'flood' if m.verdict.flooded else 'clear' }}" aria-label="Flood prediction">
+      <span class="verdict__icon">{{ icon("drop" if m.verdict.flooded else "check", "ico ico--lg") }}</span>
+      <div>
+        <p class="verdict__kicker">Flood prediction · {{ m.short }}</p>
+        <p class="verdict__label">{{ m.verdict.label }}</p>
+        <p class="verdict__why">{{ "%.1f" | format(100 * m.verdict.water_fraction) }}% of valid pixels water-covered (flood threshold {{ "%g" | format(100 * m.verdict.min_fraction) }}%).
+          {% if m.verdict.legacy_agrees is not none %}
+            Original scene classifier {{ "agrees" if m.verdict.legacy_agrees else "disagrees" }}.
+          {% endif %}
+        </p>
+      </div>
+    </section>
+    {% endif %}
+    <section class="verdict verdict--plant-{{ sc.code if sc else 'na' }}" aria-label="Plantation screening">
+      <span class="verdict__icon">{{ icon("leaf", "ico ico--lg") }}</span>
+      <div>
+        <p class="verdict__kicker">Plantation screening · indicative</p>
+        {% if sc %}
+          <p class="verdict__label">{{ sc.label }}</p>
+          <p class="verdict__why">{{ sc.reason }}{% for n in sc.notes %} {{ n }}{% endfor %}</p>
+        {% else %}
+          <p class="verdict__label">Not available</p>
+          <p class="verdict__why">{{ r.land_cover_unavailable or "Run the analysis again to add land-surface screening." }}</p>
+        {% endif %}
+      </div>
+    </section>
+  </div>
+
   {# ---------------------------------------------------------------- KPI strip #}
   <div class="kpis" aria-label="Prediction summary for {{ m.title }}">
     {% if m.has_counts and m.water_pct is not none %}
@@ -116,7 +148,7 @@
   <div class="rx-grid rx-grid--2">
     {# ------------------------------------------------------------ doughnut #}
     <section class="panel">
-      <h3 class="panel__title">Land classification breakdown</h3>
+      <h3 class="panel__title">Flood / non-flood breakdown</h3>
       <div class="donut-wrap">
         {% set d = m.donut %}
         <svg class="donut" viewBox="0 0 180 180" role="img" aria-label="{{ '%.1f' | format(m.water_pct) }} percent water, {{ '%.1f' | format(m.dry_pct) }} percent not water, of {{ m.counts.valid | commas }} valid pixels">
@@ -174,6 +206,53 @@
       <p class="note">Share of valid pixels this method classifies as water — not a probability or model confidence. Water includes permanent rivers and lakes.{% if m.area %} Area uses the GeoTIFF's pixel size ({{ m.area.method }}).{% endif %}</p>
     </section>
   </div>
+  {% endif %}
+
+  {# ---------------------------------------------------------------- land cover #}
+  {% if m.land %}
+  <section class="panel">
+    <div class="panel__head">
+      <h3 class="panel__title">Land cover &amp; vegetation analysis</h3>
+      <span class="tag tag--warn">rule-based, not a trained model</span>
+    </div>
+    <div class="land">
+      <div class="donut-wrap">
+        <svg class="donut" viewBox="0 0 180 180" role="img" aria-label="Land cover: {% for row in m.land.rows %}{{ row.label }} {{ '%.1f' | format(row.pct) }} percent{{ ', ' if not loop.last }}{% endfor %}">
+          <circle class="donut__track" cx="90" cy="90" r="64" fill="none" stroke="#1b2a42" stroke-width="20"/>
+          {% for sg in m.land.segments %}
+          <circle class="donut__seg" cx="90" cy="90" r="64" fill="none" stroke="{{ sg.colour }}" stroke-width="20"
+                  stroke-dasharray="{{ sg.len }} 402.124" stroke-dashoffset="{{ sg.offset }}" transform="rotate(-90 90 90)"
+                  tabindex="0" data-tip="{{ sg.label }}: {{ sg.count | commas }} px ({{ '%.2f' | format(sg.pct) }}%)"><title>{{ sg.label }}: {{ sg.count | commas }} px</title></circle>
+          {% endfor %}
+          <text class="donut__num" x="90" y="88" text-anchor="middle" fill="#e4ebf5" font-size="19" font-weight="600">{{ m.land.counts.valid | commas }}</text>
+          <text class="donut__cap" x="90" y="108" text-anchor="middle" fill="#94a4ba" font-size="11">valid pixels</text>
+        </svg>
+        <div class="donut-tip" role="status" hidden></div>
+        <ul class="breakdown">
+          {% for row in m.land.rows %}
+          <li><i class="sw" style="background: {{ row.colour }}"></i><span>{{ row.label }}</span><strong>{{ "%.1f" | format(row.pct) }}%</strong><small>{{ row.count | commas }} px</small></li>
+          {% endfor %}
+        </ul>
+      </div>
+      <figure class="frame land__map">
+        <div class="frame__img">
+          <img src="{{ file_url(m.land.map) }}" alt="Land-cover map" loading="lazy" data-fallback>
+          <a class="frame__expand" href="{{ file_url(m.land.map) }}" data-lightbox data-caption="Land-cover map" aria-label="View land-cover map full size">{{ icon("expand") }}</a>
+          <div class="frame__empty" hidden>{{ icon("info") }}<span>Not available</span></div>
+        </div>
+        <figcaption>Land-cover map (same colours as the chart)</figcaption>
+      </figure>
+      <div class="land__rules">
+        <h4>How pixels are classified</h4>
+        <ol class="plain">{% for rule in m.land.rules %}<li>{{ rule }}</li>{% endfor %}</ol>
+        {% if m.land.screening %}
+        <h4>Plantation screening criteria</h4>
+        <ul class="plain">{% for c in m.land.screening.criteria %}<li>{{ c }}</li>{% endfor %}</ul>
+        <p class="note">{{ m.land.screening.caveat }}</p>
+        {% endif %}
+      </div>
+    </div>
+  </section>
   {% endif %}
 
   {# ---------------------------------------------------------------- imagery #}

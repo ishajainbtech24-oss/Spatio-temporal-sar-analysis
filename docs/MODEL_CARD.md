@@ -71,3 +71,13 @@ benchmark; a starting point for flood-mapping experiments.
 | Loading | `sar_flood.models.legacy.load_legacy_classifier()` (weights-only; the saved graph segfaults on Python 3.13) |
 
 Kept for transparency and comparison. It should not be used to make claims about flooding.
+
+## 3. Flood verdict and land-surface screening (`inference/landcover.py`)
+
+| | |
+|---|---|
+| Flood verdict | "Flood-affected" when ≥ 1 % of valid pixels are water in the selected method's mask (notebook 02 labelled a chip "Flood" when it contained water). "Flood" means water-covered at acquisition time, including permanent water. |
+| Land-cover classes | Rules on median-filtered dB: water = method mask; built-up/very bright = VV ≥ −6 dB; vegetation = VH ≥ −19 dB; bare/sparse = rest. Needs a calibrated VV+VH GeoTIFF. |
+| Plantation screening | Not suitable if ≥ 50 % water or ≥ 50 % built-up; potentially suitable (survey recommended) if ≥ 50 % vegetation + bare; otherwise inconclusive. |
+| Validation | **None.** No notebook or saved model performs land-cover or plantation analysis, and Sen1Floods11 has no land-cover labels. Thresholds are literature rules of thumb and vary with incidence angle, moisture, crop stage and terrain. |
+| Intended use | A first-pass, explainable indication of where a field survey may be worthwhile. Not an agronomic suitability assessment. |

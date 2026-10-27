@@ -49,8 +49,8 @@ def test_page_shows_computed_percentages_and_counts(app_and_client):
     pct = 100 * c["water"] / c["valid"]
     assert f"{pct:.1f}" in html and f"{100 - pct:.1f}" in html
     assert f"{c['valid']:,}" in html and f"{c['water']:,}" in html
-    for text in ["Flood Detection Analysis", "Land classification breakdown", "Flood prediction summary",
-                 "Imagery comparison", "Spatial distribution", "Technical details", "Back to dashboard",
+    for text in ["Flood Detection Analysis", "Flood prediction summary",
+                 "Imagery comparison", "Spatial distribution", "Flood prediction", "Plantation screening", "Land cover &amp; vegetation analysis", "Technical details", "Back to dashboard",
                  "Download report", "Ground truth (reference)", 'role="tablist"']:
         assert text in html, text
     assert "not a probability or model confidence" in html
