@@ -1,9 +1,45 @@
-data/raw/
-data/processed/
+# --- Python / tooling
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+.ipynb_checkpoints/
+
+# --- environments & secrets
+.venv/
+venv/
+env/
+.env
+*.env.local
+
+# --- data (download separately, see docs/DATASET.md)
+data/*
+!data/README.md
+
+# --- generated outputs: runs, checkpoints, evaluations, dashboard uploads
+outputs/
 *.h5
 *.pth
 *.pt
 *.ckpt
 *.zip
-__pycache__/
-.ipynb_checkpoints/
+*.npy
+*.npz
+
+# Keras checkpoints are generated under outputs/; the three legacy models are tracked on purpose
+*.keras
+!models/legacy/*.keras
+
+# --- logs & OS cruft
+*.log
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

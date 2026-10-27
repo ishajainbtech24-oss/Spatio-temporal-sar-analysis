@@ -1,0 +1,26 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it, and cite the Sen1Floods11 dataset (see references)."
+title: "SAR surface-water segmentation on Sen1Floods11 (Spatio-temporal-sar-analysis)"
+type: software
+authors:
+  - name: "Isha Jain"   # check spelling/affiliation before publishing
+    affiliation: "RV University, Bengaluru"
+repository-code: "https://github.com/ishajainbtech24-oss/Spatio-temporal-sar-analysis"
+version: 0.2.0
+date-released: 2026-10-27
+references:
+  - type: conference-paper
+    title: "Sen1Floods11: a georeferenced dataset to train and test deep learning flood algorithms for Sentinel-1"
+    authors:
+      - family-names: Bonafilia
+        given-names: Derrick
+      - family-names: Tellman
+        given-names: Beth
+      - family-names: Anderson
+        given-names: Tyler
+      - family-names: Issenberg
+        given-names: Erica
+    collection-title: "Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) Workshops"
+    year: 2020
+    start: 210
+    end: 211

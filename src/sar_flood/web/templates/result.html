@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block title %}Result · {{ r.input }}{% endblock %}
+{% block head %}
+  {% if r.map %}
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+  {% endif %}
+{% endblock %}
+{% macro img(name, alt) -%}
+  <img src="{{ url_for('result_file', rid=rid, name=name) }}" alt="{{ alt }}" loading="lazy">
+{%- endmacro %}
+{% block content %}
+<div class="result-head">
+  <div>
+    <h1 class="page-title">{{ r.input }}</h1>
+    <p class="meta-line">{{ r.width }}×{{ r.height }} px, {{ r.bands }} band{{ 's' if r.bands > 1 }}{% if r.nodata_fraction %}, {{ r.nodata_fraction | pct }} no data{% endif %}{% if not r.calibrated_db %}, <span class="tag tag--warn">uncalibrated input</span>{% endif %}</p>
+  </div>
+  <a class="btn" href="{{ url_for('analyze_form') }}">Analyse another</a>
+</div>
+
+{% for w in r.warnings %}<div class="notice notice--warn">{{ w }}</div>{% endfor %}
+
+<section class="sheet" aria-label="Input">
+  <h2>Input</h2>
+  <div class="tiles">
+    <figure>{{ img(r.images.vv, 'VV backscatter') }}<figcaption>{{ 'VV backscatter (−25…0 dB)' if r.calibrated_db else 'Input (grey levels)' }}</figcaption></figure>
+    {% if r.images.vh %}<figure>{{ img(r.images.vh, 'VH backscatter') }}<figcaption>VH backscatter (−32…−5 dB)</figcaption></figure>{% endif %}
+    {% if r.images.false_colour %}<figure>{{ img(r.images.false_colour, 'False colour composite') }}<figcaption>False colour: R VV, G VH, B VV−VH. Water is dark blue.</figcaption></figure>{% endif %}
+    {% if r.images.ground_truth %}<figure>{{ img(r.images.ground_truth, 'Ground truth') }}<figcaption>Ground truth</figcaption></figure>{% endif %}
+  </div>
+  <ul class="legend" aria-label="Legend">
+    <li><i class="sw sw--water"></i>water</li>
+    <li><i class="sw sw--land"></i>not water</li>
+    <li><i class="sw sw--ignore"></i>no data / unlabelled</li>
+    {% if r.images.ground_truth %}<li><i class="sw sw--fp"></i>false alarm</li><li><i class="sw sw--fn"></i>missed water</li>{% endif %}
+  </ul>
+</section>
+
+{% for key, m in r.methods.items() %}
+<section class="sheet method">
+  <div class="method__head">
+    <h2>{{ m.title }}</h2>
+    {% if m.trained_on == 'synthetic' %}<span class="tag tag--warn">checkpoint trained on synthetic data</span>{% endif %}
+  </div>
+  <div class="method__body">
+    <div class="tiles tiles--tight">
+      <figure>{{ img(m.overlay, m.title ~ ' overlay') }}<figcaption>Prediction over input</figcaption></figure>
+      <figure>{{ img(m.mask, m.title ~ ' mask') }}<figcaption>Predicted mask</figcaption></figure>
+      {% if m.agreement %}<figure>{{ img(m.agreement, m.title ~ ' agreement') }}<figcaption>Agreement with ground truth</figcaption></figure>{% endif %}
+      {% if m.probability %}<figure>{{ img(m.probability, m.title ~ ' probability') }}<figcaption>Water probability (dark → bright)</figcaption></figure>{% endif %}
+    </div>
+    <dl class="stats">
+      <dt>Water fraction</dt><dd>{{ m.water_fraction | pct }}</dd>
+      {% if m.threshold is defined %}<dt>Decision threshold</dt><dd>{{ m.threshold | num(2) }}</dd>{% endif %}
+      {% if m.threshold_db is defined %}<dt>VV threshold</dt><dd>{{ m.threshold_db }} dB</dd>{% endif %}
+      {% if m.threshold_grey is defined %}<dt>Grey threshold</dt><dd>{{ m.threshold_grey }}</dd>{% endif %}
+      {% if m.metrics %}
+        <dt>IoU</dt><dd>{{ m.metrics.iou | num }}</dd>
+        <dt>Dice / F1</dt><dd>{{ m.metrics.dice_f1 | num }}</dd>
+        <dt>Precision</dt><dd>{{ m.metrics.precision | num }}</dd>
+        <dt>Recall</dt><dd>{{ m.metrics.recall | num }}</dd>
+      {% endif %}
+      {% if m.geotiff %}<dt>Download</dt><dd><a href="{{ url_for('result_file', rid=rid, name=m.geotiff) }}">mask GeoTIFF</a></dd>{% endif %}
+    </dl>
+  </div>
+</section>
+{% endfor %}
+
+{% if r.legacy_classifier %}
+<section class="sheet">
+  <h2>Legacy scene classifier</h2>
+  <p>Chip-level answer from the original MobileNetV2 + transformer model: <strong>{{ r.legacy_classifier.label }}</strong>.</p>
+  <div class="meter" role="img" aria-label="Probability the chip contains no water: {{ r.legacy_classifier.p_no_water | pct }}">
+    <span style="width: {{ (100 * r.legacy_classifier.p_no_water) | round(1) }}%"></span>
+    <i style="left: {{ (100 * r.legacy_classifier.threshold_no_water) | round(1) }}%" title="decision threshold"></i>
+  </div>
+  <p class="note">Probability the chip contains no water: {{ r.legacy_classifier.p_no_water | pct }} (threshold {{ r.legacy_classifier.threshold_no_water }}). The model was trained on every hand-labelled chip, so it has no held-out evaluation on this dataset.</p>
+</section>
+{% endif %}
+
+{% if r.map %}
+<section class="sheet">
+  <h2>Location</h2>
+  {% set first = r.methods.values() | list | first %}
+  <div id="map" class="map" data-south="{{ r.map.south }}" data-west="{{ r.map.west }}" data-north="{{ r.map.north }}" data-east="{{ r.map.east }}" data-overlay="{{ url_for('result_file', rid=rid, name=first.overlay) }}"></div>
+  <p class="note">{{ first.title }} overlay placed from the GeoTIFF's georeferencing{% if not r.map.exact %} (approximate: the raster is not in geographic coordinates){% endif %}. Basemap © OpenStreetMap contributors.</p>
+</section>
+{% endif %}
+{% endblock %}
+{% block scripts %}
+  {% if r.map %}
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script src="{{ url_for('static', filename='js/map.js') }}" defer></script>
+  {% endif %}
+{% endblock %}

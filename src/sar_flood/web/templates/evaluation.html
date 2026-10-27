@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Evaluation{% endblock %}
+{% block content %}
+<h1 class="page-title">Evaluation</h1>
+<p class="lede">Every table below is read from a <code>metrics.json</code> written by <code>sar-flood evaluate</code>. IoU is computed over all valid pixels of the split; pixels with no data or no label are ignored.</p>
+
+{% if not evals %}
+  <div class="panel empty">
+    <h2>No evaluation results yet</h2>
+    <p>Run an evaluation and reload this page:</p>
+    <pre><code>sar-flood evaluate --config configs/default.yaml --run-dir outputs/runs/unet_sen1floods11 --split test</code></pre>
+    <p>Without a trained model, drop <code>--run-dir</code> to score the threshold baselines only.</p>
+  </div>
+{% endif %}
+
+{% for e in evals %}
+<section class="sheet">
+  <div class="method__head">
+    <h2>{{ e.name }}</h2>
+    {% if e.data_source == 'synthetic' %}<span class="tag tag--warn">synthetic data — pipeline check, not a result</span>{% else %}<span class="tag">{{ e.data_source }}</span>{% endif %}
+  </div>
+  <p class="meta-line">{{ e.split }} split ({{ e.split_strategy }}), {{ e.n_chips }} chips{% if e.skipped %}, {{ e.skipped | length }} skipped{% endif %}{% if e.unet_threshold %}, U-Net threshold {{ e.unet_threshold | num(2) }}{% endif %}. Created {{ e.created }}.</p>
+  <div class="table-wrap">
+  <table class="metrics">
+    <thead>
+      <tr><th scope="col">Method</th><th scope="col">IoU</th><th scope="col" class="bar-col">IoU</th><th scope="col">Dice / F1</th><th scope="col">Precision</th><th scope="col">Recall</th><th scope="col">Pixel acc.</th><th scope="col">Mean per-chip IoU</th></tr>
+    </thead>
+    <tbody>
+      {% for name, s in e.models.items() %}
+      <tr>
+        <th scope="row">{{ name }}</th>
+        <td>{{ s.micro.iou | num }}</td>
+        <td class="bar-col"><span class="bar" style="width: {{ ((s.micro.iou or 0) * 100) | round(1) }}%"></span></td>
+        <td>{{ s.micro.dice_f1 | num }}</td>
+        <td>{{ s.micro.precision | num }}</td>
+        <td>{{ s.micro.recall | num }}</td>
+        <td>{{ s.micro.pixel_accuracy | num }}</td>
+        <td>{{ s.per_image.mean_iou | num }} <small>({{ s.per_image.n_scored }} chips)</small></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% if e.legacy_scene_classifier %}
+    {% set l = e.legacy_scene_classifier %}
+    <p class="note"><strong>Legacy scene classifier</strong> ({{ l.task }}): ROC AUC {{ l.roc_auc | num }}, precision {{ l.precision | num }}, recall {{ l.recall | num }} on {{ l.n }} chips ({{ l.n_no_water }} without water). {{ l.WARNING }}</p>
+  {% endif %}
+</section>
+{% endfor %}
+
+<section class="sheet sheet--muted">
+  <h2>Historical notebook results</h2>
+  <p class="meta-line">{{ history.source }}</p>
+  <p>Task: {{ history.task }}. Protocol: {{ history.protocol }}. These are copied from saved notebook outputs and were <strong>not reproduced</strong> during the refactor. They are not comparable with the segmentation IoU above.</p>
+  <div class="table-wrap">
+  <table class="metrics">
+    <thead><tr><th scope="col">Model</th><th scope="col">Out-of-fold ROC AUC</th><th scope="col">F1</th><th scope="col">Precision</th><th scope="col">Recall</th></tr></thead>
+    <tbody>
+      {% for row in history.rows %}
+      <tr><th scope="row">{{ row.model }}</th><td>{{ row.auc }}</td><td>{{ row.f1 }}</td><td>{{ row.precision }}</td><td>{{ row.recall }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</section>
+{% endblock %}

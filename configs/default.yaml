@@ -1,0 +1,35 @@
+# Full Sen1Floods11 hand-labelled training run.
+# Paths are relative to the repository root; override with SAR_DATA_ROOT / SAR_OUTPUT_DIR.
+run_name: unet_sen1floods11
+output_dir: outputs
+
+data:
+  root: data/raw/sen1floods11/v1.1   # folder that contains data/flood_events/HandLabeled
+  split_strategy: auto               # official CSV splits if present, else group-by-event
+  val_fraction: 0.15
+  test_fraction: 0.15
+  bands: [1, 2]                      # 1 = VV, 2 = VH
+
+preprocess:
+  median_size: 3                     # speckle filter window (0 disables)
+  db_min: -50.0                      # clip range in dB before scaling to [0, 1]
+  db_max: 1.0
+  fill_value: 0.0
+
+model:
+  base_filters: 16
+  depth: 4
+  dropout: 0.1
+
+train:
+  seed: 42
+  batch_size: 8
+  epochs: 40
+  learning_rate: 0.001
+  crop_size: 256
+  augment: true
+  early_stopping_patience: 8
+  ae_epochs: 20
+  use_autoencoder_init: true
+  device: auto
+  max_train_samples: null

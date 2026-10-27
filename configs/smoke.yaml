@@ -1,0 +1,23 @@
+# Minutes-long CPU smoke run on synthetic data (`sar-flood make-synthetic` first).
+# Proves the pipeline runs end to end. Its metrics mean nothing about real SAR data.
+run_name: smoke_synthetic
+output_dir: outputs
+
+data:
+  root: data/synthetic
+  split_strategy: auto
+
+model:
+  base_filters: 8
+  depth: 3
+  dropout: 0.0
+
+train:
+  seed: 7
+  batch_size: 4
+  epochs: 4
+  learning_rate: 0.003
+  crop_size: 64
+  early_stopping_patience: 4
+  ae_epochs: 2
+  device: cpu

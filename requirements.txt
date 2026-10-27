@@ -1,7 +1,13 @@
-tensorflow
-opencv-python
-numpy
-scikit-learn
-scipy
-scikit-image
-flask
+# Runtime + ML dependencies. Equivalent to: pip install -e ".[ml,dev]"
+# (pyproject.toml is the source of truth; keep the two in sync.)
+numpy>=1.24
+scipy>=1.10
+scikit-image>=0.21
+opencv-python-headless>=4.8
+rasterio>=1.3
+pyyaml>=6.0
+flask>=3.0
+tensorflow-cpu>=2.16; platform_system != "Darwin"
+tensorflow>=2.16; platform_system == "Darwin"
+pytest>=7.4
+ruff>=0.5

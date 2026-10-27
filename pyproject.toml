@@ -1,0 +1,50 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sar-flood"
+version = "0.2.0"
+description = "Sentinel-1 SAR surface-water / flood segmentation on Sen1Floods11 with autoencoder-pretrained U-Net, classical baselines and a Flask dashboard."
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [{ name = "Isha Jain" }]
+dependencies = [
+    "numpy>=1.24",
+    "scipy>=1.10",
+    "scikit-image>=0.21",
+    "opencv-python-headless>=4.8",
+    "rasterio>=1.3",
+    "pyyaml>=6.0",
+    "flask>=3.0",
+]
+
+[project.optional-dependencies]
+# Deep-learning parts (training, U-Net / legacy-model inference). Kept optional so the
+# data checks, baselines, metrics and most tests run without TensorFlow.
+ml = ["tensorflow-cpu>=2.16; platform_system != 'Darwin'", "tensorflow>=2.16; platform_system == 'Darwin'"]
+dev = ["pytest>=7.4", "ruff>=0.5"]
+
+[project.scripts]
+sar-flood = "sar_flood.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+markers = ["tf: tests that need TensorFlow (skipped automatically if it is not installed)"]
+filterwarnings = ["ignore::DeprecationWarning", "ignore::UserWarning"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+extend-exclude = ["notebooks"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP"]
+ignore = ["E501"]
+
+[tool.setuptools.package-data]
+sar_flood = ["web/templates/*.html", "web/static/css/*.css", "web/static/js/*.js"]

@@ -1,0 +1,54 @@
+name: tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install "ruff>=0.5"
+      - run: ruff check src tests scripts app.py
+
+  core:
+    # Data checks, preprocessing, metrics, baselines and the dashboard - without TensorFlow.
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+      - run: pip install -e ".[dev]"
+      - run: pytest -o addopts="" -q -rs
+
+  ml:
+    # Full suite incl. model tests and a tiny train -> evaluate -> predict run on synthetic data.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -e ".[ml,dev]"
+      - run: pytest -o addopts="" -q -rs
+        env:
+          TF_CPP_MIN_LOG_LEVEL: "3"
+      - name: CLI smoke run
+        run: |
+          sar-flood make-synthetic --out data/synthetic
+          sar-flood validate-data --config configs/smoke.yaml
+          sar-flood train --config configs/smoke.yaml --epochs 2 --ae-epochs 1
+          sar-flood evaluate --config configs/smoke.yaml --run-dir outputs/runs/smoke_synthetic
+          sar-flood predict samples/synthetic/Synthetic_Foxtrot_1000_S1Hand.tif --run-dir outputs/runs/smoke_synthetic --out outputs/predictions/ci
+        env:
+          TF_CPP_MIN_LOG_LEVEL: "3"
