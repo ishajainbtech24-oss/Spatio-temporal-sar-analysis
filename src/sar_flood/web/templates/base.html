@@ -4,31 +4,40 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}Dashboard{% endblock %} · SAR Flood Intelligence</title>
+  <meta name="description" content="See which areas are under water, using radar satellite images that work through cloud, day and night.">
+  <meta name="theme-color" content="#070c16">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='1' y='1' width='30' height='30' rx='7' fill='%23070c16'/%3E%3Cpath d='M1 20c5-4 9 3 15-1s10-2 15 1v4a7 7 0 0 1-7 7H8a7 7 0 0 1-7-7z' fill='%23ff7a66'/%3E%3C/svg%3E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
   {% block head %}{% endblock %}
 </head>
-<body>
+<body class="{% block body_class %}{% endblock %}">
   <a class="skip" href="#main">Skip to content</a>
-  <header class="topbar">
+  <header class="topbar" data-topbar>
     <div class="topbar__inner">
-      <a class="brand" href="{{ url_for('overview') }}">
+      <a class="brand" href="{{ url_for('overview') }}" aria-label="SAR Flood Intelligence, home">
         <svg class="brand__mark" viewBox="0 0 32 32" aria-hidden="true">
-          <rect x="1" y="1" width="30" height="30" rx="3" fill="none" stroke="currentColor" stroke-width="2"/>
-          <path d="M1 20c5-4 9 3 15-1s10-2 15 1v10H1z" fill="var(--water)"/>
+          <rect x="1" y="1" width="30" height="30" rx="7" fill="none" stroke="currentColor" stroke-width="2"/>
+          <path d="M2 20c5-4 9 3 14-1s10-2 14 1v3.5A6.5 6.5 0 0 1 23.5 30h-15A6.5 6.5 0 0 1 2 23.5z" fill="var(--water)"/>
         </svg>
         <span>SAR Flood Intelligence</span>
       </a>
-      <nav aria-label="Main">
-        <a href="{{ url_for('overview') }}" {% if active == 'overview' %}aria-current="page"{% endif %}>Overview</a>
-        <a href="{{ url_for('analyze_form') }}" {% if active == 'analyze' %}aria-current="page"{% endif %}>Analyse a chip</a>
-        <a href="{{ url_for('evaluation') }}" {% if active == 'evaluation' %}aria-current="page"{% endif %}>Evaluation</a>
+      <button class="navtoggle" type="button" aria-expanded="false" aria-controls="mainnav" data-navtoggle>
+        <span class="visually-hidden">Menu</span><i></i><i></i>
+      </button>
+      <nav id="mainnav" class="mainnav" aria-label="Main">
+        {% block nav %}
+        <a href="{{ url_for('overview') }}" {% if active == 'overview' %}aria-current="page"{% endif %}>Home</a>
+        <a href="{{ url_for('analyze_form') }}" {% if active == 'analyze' %}aria-current="page"{% endif %}>Analyse</a>
+        <a href="{{ url_for('evaluation') }}" {% if active == 'evaluation' %}aria-current="page"{% endif %}>Accuracy</a>
+        {% endblock %}
       </nav>
     </div>
   </header>
 
+  {% block main %}
   <main id="main" class="page">
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% for cat, msg in messages %}
@@ -37,9 +46,22 @@
     {% endwith %}
     {% block content %}{% endblock %}
   </main>
+  {% endblock %}
 
-  <footer class="footer">
-    <p>Sentinel-1 SAR surface-water segmentation on Sen1Floods11. Research prototype — not validated for operational flood response.</p>
+  <footer class="sitefoot">
+    <div class="sitefoot__inner">
+      <div class="sitefoot__brand">
+        <strong>SAR Flood Intelligence</strong>
+        <p>Flood maps from radar satellite images. A research project, not for emergency use.</p>
+      </div>
+      <nav class="sitefoot__links" aria-label="Footer">
+        <a href="{{ url_for('overview') }}">Home</a>
+        <a href="{{ url_for('analyze_form') }}">Start analysis</a>
+        <a href="{{ url_for('evaluation') }}">Accuracy</a>
+        <a href="https://github.com/ishajainbtech24-oss/Spatio-temporal-sar-analysis" rel="noopener">Source code</a>
+      </nav>
+      <p class="sitefoot__copy">© 2026 Isha Jain</p>
+    </div>
   </footer>
   <script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
   {% block scripts %}{% endblock %}

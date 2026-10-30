@@ -21,8 +21,36 @@ def test_pages_render(client, url):
     assert b"SAR Flood Intelligence" in r.data
 
 
-def test_overview_states_no_checkpoint(client):
-    assert b"None yet" in client.get("/").data
+LANDING_JARGON = ["U-Net", "autoencoder", "neural", "CNN", "Transformer", "dB", "backscatter",
+                  "Sen1Floods11", "IoU", "segmentation", "model", "pixel", "VV", "VH", "Otsu",
+                  "threshold", "chip"]
+
+
+def test_landing_has_no_jargon(client):
+    import re
+
+    html = client.get("/").data.decode()
+    text = re.sub(r"<[^>]+>", " ", re.sub(r"<(script|style|head)[\s\S]*?</\1>", " ", html))
+    for word in LANDING_JARGON:
+        assert not re.search(rf"\b{re.escape(word)}\b", text, re.I), word
+
+
+def test_landing_structure_and_links(client):
+    html = client.get("/").data.decode()
+    for anchor in ('id="about"', 'id="how"', 'href="#about"', 'href="#how"'):
+        assert anchor in html
+    assert html.count('href="/analyze"') >= 3  # nav, hero and closing button all start an analysis
+    assert "Illustration" in html  # the hero image is labelled honestly
+    for img in ("hero-radar.webp", "hero-flood.webp", "detail-flood.webp", "band-radar.webp"):
+        assert img in html
+        r = client.get(f"/static/images/{img}")
+        assert r.status_code == 200 and r.data[:4] == b"RIFF"
+
+
+def test_analyze_page_plain_language(client):
+    html = client.get("/analyze").data.decode()
+    assert "Start an analysis" in html and "Try a sample" in html and "Upload your own" in html
+    assert "chip" not in html.lower()
 
 
 def test_evaluation_empty_state_and_history(client):

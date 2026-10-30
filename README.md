@@ -42,7 +42,7 @@ simple thresholds used operationally.
   breakdown, image comparison, spatial grid and map; a PDF report; evaluation results.
 - **Legacy model preserved**: the original MobileNetV2 + transformer classifier, made loadable on
   current Python and reported with its correct meaning.
-- **94 tests** on synthetic fixtures and a GitHub Actions workflow.
+- **96 tests** on synthetic fixtures and a GitHub Actions workflow.
 
 ## Architecture
 
@@ -157,7 +157,7 @@ Useful switches: `--epochs`, `--ae-epochs`, `--max-train-samples`, `--device cpu
 |---|---|
 | Rebuilt legacy model matches the original | Same 7 inputs through the original file (Python 3.12) and the rebuilt model (Python 3.13): max abs difference 1.25 × 10⁻⁶ |
 | Full pipeline runs and learns | `sar-flood train --config configs/smoke.yaml --epochs 15 --ae-epochs 3` on synthetic data (2 CPU cores, 19.5 s of training): validation IoU 0.990; test IoU 0.985 for the U-Net vs. 0.997 for Otsu. Identical on a repeat run (fixed seed). Shows the code works; says nothing about real SAR. |
-| Test suite | 94 passed (Python 3.13, TF 2.21); 82 passed / 12 skipped without TensorFlow (Python 3.12) |
+| Test suite | 96 passed (Python 3.13, TF 2.21); 84 passed / 12 skipped without TensorFlow (Python 3.12) |
 
 ### Real-data accuracy
 
@@ -179,8 +179,8 @@ sar-flood serve              # or: python app.py
 
 | Page | What it shows |
 |---|---|
-| Overview | What the system does, which checkpoint is loaded and what data it was trained on |
-| Analyse a chip | Upload a GeoTIFF/PNG (optional ground truth) or pick a bundled sample |
+| Home | Landing page: drag across a radar image to reveal its flood map, a short explanation and a Start analysis button |
+| Analyse | Pick a sample or upload a GeoTIFF/PNG (optional correct-answer mask) |
 | Result | Analysis dashboard: run ID, status and timestamp; **flood verdict** (flood-affected / no flood water) and an indicative **plantation screening**; a rule-based **land cover & vegetation** doughnut and map; a method switcher (U-Net / Otsu / fixed threshold); KPI strip (water-covered %, not-water %, valid pixels, water pixels, method and run time); land-classification doughnut and prediction summary with pixel counts and — for georeferenced inputs — area in ha/km²; SAR / mask / overlay (opacity slider) / ground-truth comparison with full-size viewer; spatial water-share grid; map; collapsible technical details; **Download report** (PDF) |
 | Evaluation | Tables from `outputs/eval/*/metrics.json`, plus clearly separated historical numbers |
 

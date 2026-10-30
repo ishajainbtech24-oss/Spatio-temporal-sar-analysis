@@ -87,7 +87,8 @@ def list_samples() -> list[dict]:
         label = path.with_name(path.name.replace("_S1Hand.tif", "_LabelHand.tif"))
         out.append({"key": f"{path.parent.name}/{path.name}", "name": path.name,
                     "group": path.parent.name, "label": label if label != path and label.exists() else None})
-    return out
+    # samples that come with a correct answer first, then the rest
+    return sorted(out, key=lambda s: (s["label"] is None, s["group"] == "legacy", s["name"]))
 
 
 def collect_evaluations() -> list[dict]:

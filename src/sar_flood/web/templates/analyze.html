@@ -1,28 +1,12 @@
 {% extends "base.html" %}
-{% block title %}Analyse a chip{% endblock %}
+{% block title %}Start an analysis{% endblock %}
 {% block content %}
-<h1 class="page-title">Analyse a chip</h1>
-<p class="lede">Run every available method on one image. Results include masks, overlays, a downloadable georeferenced mask and — if you add ground truth — per-pixel scores.</p>
+<h1 class="page-title">Start an analysis</h1>
+<p class="lede">Upload a radar image, or pick a sample to see how it works.</p>
 
 <div class="grid-2">
-  <form class="panel" method="post" action="{{ url_for('analyze_submit') }}" enctype="multipart/form-data" data-busy-form>
-    <h2>Upload</h2>
-    <label class="field">
-      <span>SAR image</span>
-      <input type="file" name="image" accept=".tif,.tiff,.png,.jpg,.jpeg" required>
-      <small>Best: a Sen1Floods11 <code>*_S1Hand.tif</code> (2 bands, VV and VH in dB). PNG/JPEG works but only for the legacy classifier and a relative Otsu split. Up to {{ max_mb }} MB.</small>
-    </label>
-    <label class="field">
-      <span>Ground truth (optional)</span>
-      <input type="file" name="label" accept=".tif,.tiff">
-      <small>Matching <code>*_LabelHand.tif</code>: −1 no data, 0 land, 1 water.</small>
-    </label>
-    <button class="btn btn--primary" type="submit">Run analysis</button>
-    <p class="busy" hidden role="status">Running… the first run loads the models, which can take a few seconds.</p>
-  </form>
-
   <form class="panel" method="post" action="{{ url_for('analyze_submit') }}" data-busy-form>
-    <h2>Or use a bundled sample</h2>
+    <h2>Try a sample</h2>
     {% if samples %}
       <fieldset class="samples">
         <legend class="visually-hidden">Samples</legend>
@@ -31,22 +15,38 @@
             <input type="radio" name="sample" value="{{ s.key }}" {% if loop.first %}checked{% endif %}>
             <span class="sample__name">{{ s.name }}</span>
             <span class="sample__meta">
-              {% if s.group == 'synthetic' %}<span class="tag tag--warn">synthetic</span>{% elif s.group == 'legacy' %}<span class="tag">legacy upload, origin unknown</span>{% else %}<span class="tag">{{ s.group }}</span>{% endif %}
-              {% if s.label %}<span class="tag">has ground truth</span>{% endif %}
+              {% if s.group == 'synthetic' %}<span class="tag tag--warn">practice image</span>{% elif s.group == 'legacy' %}<span class="tag">older upload</span>{% else %}<span class="tag">{{ s.group }}</span>{% endif %}
+              {% if s.label %}<span class="tag">includes correct answer</span>{% endif %}
             </span>
           </label>
         {% endfor %}
       </fieldset>
-      <label class="check"><input type="checkbox" name="use_label" checked> Compare with ground truth when available</label>
+      <label class="check"><input type="checkbox" name="use_label" checked> Compare with the correct answer when there is one</label>
       <button class="btn btn--primary" type="submit">Analyse sample</button>
-      <p class="busy" hidden role="status">Running…</p>
+      <p class="busy" hidden role="status">Analysing… the first run can take a few seconds.</p>
     {% else %}
-      <p>No samples found in <code>samples/</code>.</p>
+      <p>No samples are available yet.</p>
     {% endif %}
+  </form>
+
+  <form class="panel" method="post" action="{{ url_for('analyze_submit') }}" enctype="multipart/form-data" data-busy-form>
+    <h2>Upload your own</h2>
+    <label class="field">
+      <span>Radar image</span>
+      <input type="file" name="image" accept=".tif,.tiff,.png,.jpg,.jpeg" required>
+      <small>A Sentinel-1 GeoTIFF gives the full result. PNG and JPEG give a simpler result. Up to {{ max_mb }} MB.</small>
+    </label>
+    <details class="field more-field">
+      <summary>Add the correct answer (optional)</summary>
+      <input type="file" name="label" accept=".tif,.tiff">
+      <small>A matching water map as a GeoTIFF, to see how close the result is.</small>
+    </details>
+    <button class="btn btn--primary" type="submit">Analyse image</button>
+    <p class="busy" hidden role="status">Analysing… the first run can take a few seconds.</p>
   </form>
 </div>
 
-<p class="note">Currently loaded U-Net:
-  {% if status.meta %}<strong>{{ status.run_name }}</strong>{% if status.meta.data_source == 'synthetic' %} <span class="tag tag--warn">trained on synthetic data</span>{% endif %}{% else %}none — baselines only{% endif %}.
-</p>
+{% if status.meta and status.meta.data_source == 'synthetic' %}
+<p class="note">The flood model on this server was trained on practice images, so results show how the tool works rather than real-world accuracy.</p>
+{% endif %}
 {% endblock %}

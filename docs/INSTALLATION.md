@@ -36,7 +36,7 @@ pip install -e ".[dev]"
 ```
 
 Gives data validation, preprocessing, the threshold baselines, evaluation of baselines, the
-dashboard (baselines only) and 82 of the 94 tests. Model tests are skipped automatically.
+dashboard (baselines only) and 84 of the 96 tests. Model tests are skipped automatically.
 
 ## GPU
 

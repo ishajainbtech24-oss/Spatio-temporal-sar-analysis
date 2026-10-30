@@ -6,7 +6,7 @@ authors:
   - name: "Isha Jain"   # check spelling/affiliation before publishing
     affiliation: "RV University, Bengaluru"
 repository-code: "https://github.com/ishajainbtech24-oss/Spatio-temporal-sar-analysis"
-version: 0.4.0
+version: 0.5.0
 date-released: 2026-10-27
 references:
   - type: conference-paper

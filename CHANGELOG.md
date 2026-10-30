@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.5.0 — landing page redesign
+
+### Changed
+- New landing page: full-screen radar image with a draggable before/after comparison against its flood map (keyboard and touch accessible, one opening sweep, respects reduced motion), short About section, three-step How it works, closing call to action. Plain language only; a test fails if technical terms appear on it.
+- Site-wide header with mobile menu (transparent over the landing hero, solid on scroll) and a new footer. Navigation renamed to Home / Analyse / Accuracy.
+- Analysis page reworded in plain language (samples first, optional answer file tucked away); samples with a correct answer are listed first.
+
+### Added
+- `scripts/make_landing_art.py`: reproducible generator for the landing illustration (procedural radar-style scene, labelled "Illustration" on the page) and the four `static/images/*.webp` files.
+
 ## 0.4.0 — flood verdict and land-cover / plantation screening
 
 ### Added
