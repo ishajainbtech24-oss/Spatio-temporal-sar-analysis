@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.6.0 — deployment
+
+### Added
+- `Dockerfile` (gunicorn, port from `PORT`, non-root user, health check) with a full build and a lite `WITH_TF=0` build; `.dockerignore`; `deploy` extra (gunicorn).
+- `scripts/deploy_hf_space.py`: one-command deploy to a Hugging Face Space (tracked files only, legacy samples of unknown origin excluded, optional trained model, random `SECRET_KEY` secret).
+- `RESULT_TTL_HOURS` (deletes old analyses; 24 h in the image) and `TRUST_PROXY` (correct URLs behind a proxy).
+- CI job that builds the image and checks it serves pages; `docs/DEPLOYMENT.md`.
+- Automatic deploys: `.github/workflows/deploy.yml` uploads to the Space after every push to `main` once tests pass (needs `HF_TOKEN` secret and `HF_SPACE` variable).
+- `sar-flood publish-model` puts a trained U-Net in `models/unet/` so it is committed and deployed; the app finds it when there are no local runs. Synthetic-trained models are refused.
+
 ## 0.5.0 — landing page redesign
 
 ### Changed

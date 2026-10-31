@@ -8,11 +8,15 @@
 * /api/health  JSON status
 
 Configuration (environment variables):
-  SAR_FLOOD_RUN_DIR   trained run to use (default: newest outputs/runs/*/ with a checkpoint)
+  SAR_FLOOD_RUN_DIR   trained run to use (default: newest outputs/runs/*/ with a checkpoint,
+                      else a model published to models/unet/ with `sar-flood publish-model`)
   SAR_OUTPUT_DIR      outputs folder (default: <repo>/outputs)
   SAR_FLOOD_LEGACY    "0" disables the legacy classifier
   SECRET_KEY          Flask session key for flash messages (random per process if unset)
   MAX_UPLOAD_MB       upload limit (default 25)
+  RESULT_TTL_HOURS    delete stored analyses older than this (default 0 = keep forever;
+                      the Docker image sets 24 so a public demo does not fill its disk)
+  TRUST_PROXY         "1" when running behind a reverse proxy (Hugging Face, Render, ...)
 """
 
 from __future__ import annotations
@@ -21,6 +25,7 @@ import os
 import re
 import secrets
 import shutil
+import time
 import uuid
 from pathlib import Path
 
@@ -73,9 +78,13 @@ def find_run_dir() -> Path | None:
     if explicit:
         p = Path(explicit)
         return p if (p / "model.keras").exists() else None
-    runs = [p.parent for p in (_output_dir() / "runs").glob("*/metadata.json")
-            if (p.parent / "model.keras").exists()]
-    return max(runs, key=lambda p: p.stat().st_mtime) if runs else None
+    # 1) your own runs under outputs/runs (newest first), 2) a model committed to the repo
+    #    under models/unet/<run>/ with `sar-flood publish-model` (this is what deploys).
+    for root in (_output_dir() / "runs", PROJECT_ROOT / "models" / "unet"):
+        runs = [p.parent for p in root.glob("*/metadata.json") if (p.parent / "model.keras").exists()]
+        if runs:
+            return max(runs, key=lambda p: p.stat().st_mtime)
+    return None
 
 
 def list_samples() -> list[dict]:
@@ -111,10 +120,15 @@ def create_app(test_config: dict | None = None) -> Flask:
         MAX_CONTENT_LENGTH=int(os.environ.get("MAX_UPLOAD_MB", "25")) * 1024 * 1024,
         USE_LEGACY=os.environ.get("SAR_FLOOD_LEGACY", "1") != "0",
         WEB_RUNS_DIR=_output_dir() / "web",
+        RESULT_TTL_HOURS=float(os.environ.get("RESULT_TTL_HOURS", "0") or 0),
         RUN_DIR=None,  # resolved lazily so tests can override
     )
     if test_config:
         app.config.update(test_config)
+    if os.environ.get("TRUST_PROXY") == "1":
+        from werkzeug.middleware.proxy_fix import ProxyFix  # noqa: PLC0415
+
+        app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
     state: dict = {"segmenter": None, "segmenter_dir": None, "segmenter_error": None}
 
     def run_dir() -> Path | None:
@@ -157,8 +171,22 @@ def create_app(test_config: dict | None = None) -> Flask:
         return render_template("analyze.html", samples=list_samples(), status=model_status(),
                                max_mb=app.config["MAX_CONTENT_LENGTH"] // (1024 * 1024), active="analyze")
 
+    def _cleanup_old_results() -> None:
+        ttl = app.config["RESULT_TTL_HOURS"]
+        root = Path(app.config["WEB_RUNS_DIR"])
+        if ttl <= 0 or not root.is_dir():
+            return
+        cutoff = time.time() - ttl * 3600
+        for d in root.iterdir():
+            try:
+                if d.is_dir() and RESULT_ID.match(d.name) and d.stat().st_mtime < cutoff:
+                    shutil.rmtree(d, ignore_errors=True)
+            except OSError:
+                pass
+
     @app.post("/analyze")
     def analyze_submit():
+        _cleanup_old_results()
         rid = uuid.uuid4().hex
         work = Path(app.config["WEB_RUNS_DIR"]) / rid
         inputs = work / "input"

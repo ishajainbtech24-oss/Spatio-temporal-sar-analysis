@@ -11,4 +11,5 @@ reportlab>=4.0
 tensorflow-cpu>=2.16; platform_system != "Darwin"
 tensorflow>=2.16; platform_system == "Darwin"
 pytest>=7.4
+gunicorn>=22; platform_system != "Windows"   # production server (Docker/Linux only)
 ruff>=0.5

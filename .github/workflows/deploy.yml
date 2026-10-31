@@ -1,0 +1,41 @@
+name: deploy
+
+# Updates the live website on Hugging Face after every push to main, but only once the
+# "tests" workflow has passed for that commit. Can also be started by hand (Actions tab ->
+# deploy -> Run workflow).
+#
+# One-time setup (repository Settings -> Secrets and variables -> Actions):
+#   Secrets   -> HF_TOKEN  = a Hugging Face token with Write access
+#   Variables -> HF_SPACE  = your-hf-username/sar-flood-intelligence
+on:
+  workflow_run:
+    workflows: [tests]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-hf-space
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: >-
+      vars.HF_SPACE != '' && (
+        github.event_name == 'workflow_dispatch' ||
+        (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push')
+      )
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # deploy exactly the commit that passed the tests
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install "huggingface_hub>=0.34"
+      - name: Upload to Hugging Face Space
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: python scripts/deploy_hf_space.py "${{ vars.HF_SPACE }}"

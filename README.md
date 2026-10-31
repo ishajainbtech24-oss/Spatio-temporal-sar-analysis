@@ -42,7 +42,7 @@ simple thresholds used operationally.
   breakdown, image comparison, spatial grid and map; a PDF report; evaluation results.
 - **Legacy model preserved**: the original MobileNetV2 + transformer classifier, made loadable on
   current Python and reported with its correct meaning.
-- **96 tests** on synthetic fixtures and a GitHub Actions workflow.
+- **103 tests** on synthetic fixtures and a GitHub Actions workflow.
 
 ## Architecture
 
@@ -98,6 +98,9 @@ python3 -m venv .venv && source .venv/bin/activate      # Windows: .venv\Scripts
 pip install -e ".[ml,dev]"
 pytest                                                    # ~20 s, no dataset needed
 ```
+
+To put the dashboard online (free Hugging Face Space, Render or any Docker host), see
+[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
 Windows, GPU and TensorFlow-free installs are covered in
 [docs/INSTALLATION.md](docs/INSTALLATION.md).
@@ -157,7 +160,7 @@ Useful switches: `--epochs`, `--ae-epochs`, `--max-train-samples`, `--device cpu
 |---|---|
 | Rebuilt legacy model matches the original | Same 7 inputs through the original file (Python 3.12) and the rebuilt model (Python 3.13): max abs difference 1.25 × 10⁻⁶ |
 | Full pipeline runs and learns | `sar-flood train --config configs/smoke.yaml --epochs 15 --ae-epochs 3` on synthetic data (2 CPU cores, 19.5 s of training): validation IoU 0.990; test IoU 0.985 for the U-Net vs. 0.997 for Otsu. Identical on a repeat run (fixed seed). Shows the code works; says nothing about real SAR. |
-| Test suite | 96 passed (Python 3.13, TF 2.21); 84 passed / 12 skipped without TensorFlow (Python 3.12) |
+| Test suite | 103 passed (Python 3.13, TF 2.21); 91 passed / 12 skipped without TensorFlow (Python 3.12) |
 
 ### Real-data accuracy
 
@@ -248,7 +251,7 @@ Isha Jain (B.Tech Data Science, RV University), per the repository's commit hist
 author's decision. Until a licence is added, default copyright applies. The Sen1Floods11 data is
 distributed separately under its own terms (listed as CC BY 4.0 on dataset mirrors).
 
-Further docs: [installation](docs/INSTALLATION.md) · [dataset](docs/DATASET.md) ·
+Further docs: [installation](docs/INSTALLATION.md) · [deployment](docs/DEPLOYMENT.md) · [dataset](docs/DATASET.md) ·
 [architecture](docs/ARCHITECTURE.md) · [model card](docs/MODEL_CARD.md) ·
 [audit](docs/PROJECT_AUDIT.md) · [portfolio notes](docs/PORTFOLIO.md) ·
 [changelog](CHANGELOG.md) · [contributing](CONTRIBUTING.md)

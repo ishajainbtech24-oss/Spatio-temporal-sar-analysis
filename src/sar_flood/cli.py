@@ -100,6 +100,32 @@ def cmd_predict(args) -> int:
     return 0
 
 
+def cmd_publish_model(args) -> int:
+    """Copy the files needed for inference into models/unet/<run>/ so git (and deploys) carry them."""
+    import shutil  # noqa: PLC0415
+
+    from .config import PROJECT_ROOT  # noqa: PLC0415
+    from .utils import load_json  # noqa: PLC0415
+
+    run = Path(args.run_dir)
+    needed = ["model.keras", "metadata.json", "config.yaml"]
+    missing = [n for n in needed if not (run / n).exists()]
+    if missing:
+        raise FileNotFoundError(f"{run} is missing {', '.join(missing)}; train it with `sar-flood train` first")
+    meta = load_json(run / "metadata.json")
+    if meta.get("data_source") == "synthetic" and not args.allow_synthetic:
+        raise ValueError("this model was trained on synthetic practice data; publishing it would "
+                         "show meaningless results on the website (use --allow-synthetic to override)")
+    dest = PROJECT_ROOT / "models" / "unet" / run.name
+    dest.mkdir(parents=True, exist_ok=True)
+    for n in needed:
+        shutil.copy2(run / n, dest / n)
+    size = sum((dest / n).stat().st_size for n in needed) / 1e6
+    print(f"published {run.name} to {dest.relative_to(PROJECT_ROOT)} ({size:.1f} MB)")
+    print("next: git add models/unet && git commit -m \"Publish trained model\" && git push")
+    return 0
+
+
 def cmd_serve(args) -> int:
     from .web.app import create_app  # noqa: PLC0415
 
@@ -152,6 +178,11 @@ def build_parser() -> argparse.ArgumentParser:
     sp.add_argument("--out", default="outputs/predictions")
     sp.add_argument("--no-legacy", action="store_true")
     sp.set_defaults(func=cmd_predict)
+
+    sp = sub.add_parser("publish-model", help="add a trained run to models/unet/ so it is committed and deployed")
+    sp.add_argument("run_dir", help="e.g. outputs/runs/unet_sen1floods11")
+    sp.add_argument("--allow-synthetic", action="store_true")
+    sp.set_defaults(func=cmd_publish_model)
 
     sp = sub.add_parser("serve", help="start the dashboard")
     sp.add_argument("--host", default="127.0.0.1")

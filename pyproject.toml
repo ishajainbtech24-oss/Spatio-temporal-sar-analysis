@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "sar-flood"
-version = "0.5.0"
+version = "0.6.0"
 description = "Sentinel-1 SAR surface-water / flood segmentation on Sen1Floods11 with autoencoder-pretrained U-Net, classical baselines and a Flask dashboard."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -25,6 +25,8 @@ dependencies = [
 # data checks, baselines, metrics and most tests run without TensorFlow.
 ml = ["tensorflow-cpu>=2.16; platform_system != 'Darwin'", "tensorflow>=2.16; platform_system == 'Darwin'"]
 dev = ["pytest>=7.4", "ruff>=0.5"]
+# Production web server for deployment (see Dockerfile / docs/DEPLOYMENT.md).
+deploy = ["gunicorn>=22"]
 
 [project.scripts]
 sar-flood = "sar_flood.cli:main"

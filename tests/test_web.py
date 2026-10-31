@@ -126,3 +126,48 @@ def test_upload_too_large(client):
     r = client.post("/analyze", data={"image": (big, "big.tif")}, content_type="multipart/form-data",
                     follow_redirects=True)
     assert b"too large" in r.data
+
+
+def test_old_results_are_cleaned_up(tmp_path, monkeypatch):
+    import os
+    import time
+
+    monkeypatch.setenv("SAR_OUTPUT_DIR", str(tmp_path / "outputs"))
+    monkeypatch.setenv("RESULT_TTL_HOURS", "24")
+    from sar_flood.web.app import create_app
+
+    web = tmp_path / "web"
+    old, fresh, other = web / ("a" * 32), web / ("b" * 32), web / "keep-me"
+    for d in (old, fresh, other):
+        d.mkdir(parents=True)
+    two_days_ago = time.time() - 48 * 3600
+    os.utime(old, (two_days_ago, two_days_ago))
+    os.utime(other, (two_days_ago, two_days_ago))
+    app = create_app({"TESTING": True, "USE_LEGACY": False, "WEB_RUNS_DIR": web})
+    app.test_client().post("/analyze", data={"sample": "synthetic/Synthetic_Foxtrot_1000_S1Hand.tif"})
+    assert not old.exists()          # expired analysis removed
+    assert fresh.exists()            # recent analysis kept
+    assert other.exists()            # anything that is not an analysis folder is never touched
+
+
+def test_results_kept_by_default(client):
+    assert client.application.config["RESULT_TTL_HOURS"] == 0
+
+
+def test_committed_model_is_found_when_no_local_runs(tmp_path, monkeypatch):
+    import sar_flood.web.app as webapp
+
+    monkeypatch.delenv("SAR_FLOOD_RUN_DIR", raising=False)
+    monkeypatch.setenv("SAR_OUTPUT_DIR", str(tmp_path / "outputs"))  # no local runs
+    monkeypatch.setattr(webapp, "PROJECT_ROOT", tmp_path)
+    assert webapp.find_run_dir() is None
+    run = tmp_path / "models" / "unet" / "real_run"
+    run.mkdir(parents=True)
+    (run / "model.keras").write_bytes(b"x")
+    (run / "metadata.json").write_text("{}")
+    assert webapp.find_run_dir() == run
+    local = tmp_path / "outputs" / "runs" / "mine"
+    local.mkdir(parents=True)
+    (local / "model.keras").write_bytes(b"x")
+    (local / "metadata.json").write_text("{}")
+    assert webapp.find_run_dir() == local  # your own runs take priority locally

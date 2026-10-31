@@ -7,7 +7,7 @@ never quote the synthetic smoke-run metrics as results.
 ## One-line description
 
 Sentinel-1 SAR surface-water segmentation on Sen1Floods11: autoencoder-pretrained U-Net vs.
-classical thresholds, with a leakage-safe evaluation pipeline, 96 automated tests and a Flask
+classical thresholds, with a leakage-safe evaluation pipeline, 103 automated tests and a Flask
 dashboard.
 
 ## Resume bullets
@@ -18,7 +18,7 @@ Pick two or three. Versions A–C are true today; D becomes usable after a real 
   inverted label encoding, NaN propagation that corrupted 45 of 446 chips, and train/test leakage;
   fixed the pipeline and documented each issue with evidence from saved notebook outputs.
 - **B (engineering).** Refactored Colab notebooks into an installable Python package with a CLI
-  (validate → train → evaluate → predict), YAML configs, run metadata and 96 pytest tests
+  (validate → train → evaluate → predict), YAML configs, run metadata and 103 pytest tests
   running in GitHub Actions without the dataset.
 - **C (ML + geospatial).** Built a Sentinel-1 VV/VH water-segmentation pipeline: NaN-aware
   despeckling, autoencoder-pretrained U-Net with masked BCE+Dice loss, Otsu/−15 dB baselines,
