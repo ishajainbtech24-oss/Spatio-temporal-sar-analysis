@@ -38,11 +38,11 @@ simple thresholds used operationally.
   per-chip, with empty chips handled explicitly) written as JSON + CSV.
 - **Outputs** as georeferenced mask GeoTIFFs and PNG quick-looks (VV, VH, false colour, overlay,
   agreement map).
-- **Dashboard**: upload a GeoTIFF or pick a sample, compare all methods side by side, see
-  agreement with ground truth, view the result on a map, browse evaluation results.
+- **Dashboard**: upload a GeoTIFF or pick a sample; an analysis page with KPIs, a class
+  breakdown, image comparison, spatial grid and map; a PDF report; evaluation results.
 - **Legacy model preserved**: the original MobileNetV2 + transformer classifier, made loadable on
   current Python and reported with its correct meaning.
-- **71 tests** on synthetic fixtures and a GitHub Actions workflow.
+- **103 tests** on synthetic fixtures and a GitHub Actions workflow.
 
 ## Architecture
 
@@ -98,6 +98,9 @@ python3 -m venv .venv && source .venv/bin/activate      # Windows: .venv\Scripts
 pip install -e ".[ml,dev]"
 pytest                                                    # ~20 s, no dataset needed
 ```
+
+To put the dashboard online (free Hugging Face Space, Render or any Docker host), see
+[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
 Windows, GPU and TensorFlow-free installs are covered in
 [docs/INSTALLATION.md](docs/INSTALLATION.md).
@@ -157,7 +160,7 @@ Useful switches: `--epochs`, `--ae-epochs`, `--max-train-samples`, `--device cpu
 |---|---|
 | Rebuilt legacy model matches the original | Same 7 inputs through the original file (Python 3.12) and the rebuilt model (Python 3.13): max abs difference 1.25 × 10⁻⁶ |
 | Full pipeline runs and learns | `sar-flood train --config configs/smoke.yaml --epochs 15 --ae-epochs 3` on synthetic data (2 CPU cores, 19.5 s of training): validation IoU 0.990; test IoU 0.985 for the U-Net vs. 0.997 for Otsu. Identical on a repeat run (fixed seed). Shows the code works; says nothing about real SAR. |
-| Test suite | 71 passed (Python 3.13, TF 2.21); 59 passed / 12 skipped without TensorFlow (Python 3.12) |
+| Test suite | 103 passed (Python 3.13, TF 2.21); 91 passed / 12 skipped without TensorFlow (Python 3.12) |
 
 ### Real-data accuracy
 
@@ -179,9 +182,9 @@ sar-flood serve              # or: python app.py
 
 | Page | What it shows |
 |---|---|
-| Overview | What the system does, which checkpoint is loaded and what data it was trained on |
-| Analyse a chip | Upload a GeoTIFF/PNG (optional ground truth) or pick a bundled sample |
-| Result | VV, VH, false colour, ground truth; per method: overlay, mask, agreement map, probability, metrics, mask GeoTIFF download; legacy classifier; map if georeferenced |
+| Home | Landing page: drag across a radar image to reveal its flood map, a short explanation and a Start analysis button |
+| Analyse | Pick a sample or upload a GeoTIFF/PNG (optional correct-answer mask) |
+| Result | Analysis dashboard: run ID, status and timestamp; **flood verdict** (flood-affected / no flood water) and an indicative **plantation screening**; a rule-based **land cover & vegetation** doughnut and map; a method switcher (U-Net / Otsu / fixed threshold); KPI strip (water-covered %, not-water %, valid pixels, water pixels, method and run time); land-classification doughnut and prediction summary with pixel counts and — for georeferenced inputs — area in ha/km²; SAR / mask / overlay (opacity slider) / ground-truth comparison with full-size viewer; spatial water-share grid; map; collapsible technical details; **Download report** (PDF) |
 | Evaluation | Tables from `outputs/eval/*/metrics.json`, plus clearly separated historical numbers |
 
 With no trained checkpoint, the dashboard runs the baselines and says so. Set
@@ -199,6 +202,8 @@ Add your own to `docs/images/` once the dashboard is running on your machine.
 - Known SAR confusions: radar shadow, smooth surfaces, flooded vegetation, urban flooding,
   wind-roughened water.
 - Single-date only; no change detection.
+- The land-cover classes and plantation screening are backscatter rules of thumb, not a trained
+  or validated model; they ignore soil, slope, climate and land rights.
 - Not validated for operational or emergency use.
 
 ## Future work
@@ -229,7 +234,7 @@ Isha Jain (B.Tech Data Science, RV University), per the repository's commit hist
 author's decision. Until a licence is added, default copyright applies. The Sen1Floods11 data is
 distributed separately under its own terms (listed as CC BY 4.0 on dataset mirrors).
 
-Further docs: [installation](docs/INSTALLATION.md) · [dataset](docs/DATASET.md) ·
+Further docs: [installation](docs/INSTALLATION.md) · [deployment](docs/DEPLOYMENT.md) · [dataset](docs/DATASET.md) ·
 [architecture](docs/ARCHITECTURE.md) · [model card](docs/MODEL_CARD.md) ·
 [audit](docs/PROJECT_AUDIT.md) · [portfolio notes](docs/PORTFOLIO.md) ·
 [changelog](CHANGELOG.md) · [contributing](CONTRIBUTING.md)

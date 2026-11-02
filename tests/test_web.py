@@ -18,11 +18,39 @@ def client(tmp_path, monkeypatch):
 def test_pages_render(client, url):
     r = client.get(url)
     assert r.status_code == 200
-    assert b"SAR water mapping" in r.data
+    assert b"SAR Flood Intelligence" in r.data
 
 
-def test_overview_states_no_checkpoint(client):
-    assert b"None yet" in client.get("/").data
+LANDING_JARGON = ["U-Net", "autoencoder", "neural", "CNN", "Transformer", "dB", "backscatter",
+                  "Sen1Floods11", "IoU", "segmentation", "model", "pixel", "VV", "VH", "Otsu",
+                  "threshold", "chip"]
+
+
+def test_landing_has_no_jargon(client):
+    import re
+
+    html = client.get("/").data.decode()
+    text = re.sub(r"<[^>]+>", " ", re.sub(r"<(script|style|head)[\s\S]*?</\1>", " ", html))
+    for word in LANDING_JARGON:
+        assert not re.search(rf"\b{re.escape(word)}\b", text, re.I), word
+
+
+def test_landing_structure_and_links(client):
+    html = client.get("/").data.decode()
+    for anchor in ('id="about"', 'id="how"', 'href="#about"', 'href="#how"'):
+        assert anchor in html
+    assert html.count('href="/analyze"') >= 3  # nav, hero and closing button all start an analysis
+    assert "Illustration" in html  # the hero image is labelled honestly
+    for img in ("hero-radar.webp", "hero-flood.webp", "detail-flood.webp", "band-radar.webp"):
+        assert img in html
+        r = client.get(f"/static/images/{img}")
+        assert r.status_code == 200 and r.data[:4] == b"RIFF"
+
+
+def test_analyze_page_plain_language(client):
+    html = client.get("/analyze").data.decode()
+    assert "Start an analysis" in html and "Try a sample" in html and "Upload your own" in html
+    assert "chip" not in html.lower()
 
 
 def test_evaluation_empty_state_and_history(client):
@@ -60,7 +88,7 @@ def test_sample_analysis_end_to_end(client):
     page = client.get(f"/results/{rid}")
     assert page.status_code == 200
     html = page.data.decode()
-    assert "Otsu threshold on VV" in html and "IoU" in html and "Location" in html
+    assert "Otsu threshold on VV" in html and "IoU" in html and "Geographic view" in html
     img = re.search(rf"/results/{rid}/files/([\w.\-]+\.png)", html).group(1)
     f = client.get(f"/results/{rid}/files/{img}")
     assert f.status_code == 200 and f.data[:4] == b"\x89PNG"
@@ -98,3 +126,48 @@ def test_upload_too_large(client):
     r = client.post("/analyze", data={"image": (big, "big.tif")}, content_type="multipart/form-data",
                     follow_redirects=True)
     assert b"too large" in r.data
+
+
+def test_old_results_are_cleaned_up(tmp_path, monkeypatch):
+    import os
+    import time
+
+    monkeypatch.setenv("SAR_OUTPUT_DIR", str(tmp_path / "outputs"))
+    monkeypatch.setenv("RESULT_TTL_HOURS", "24")
+    from sar_flood.web.app import create_app
+
+    web = tmp_path / "web"
+    old, fresh, other = web / ("a" * 32), web / ("b" * 32), web / "keep-me"
+    for d in (old, fresh, other):
+        d.mkdir(parents=True)
+    two_days_ago = time.time() - 48 * 3600
+    os.utime(old, (two_days_ago, two_days_ago))
+    os.utime(other, (two_days_ago, two_days_ago))
+    app = create_app({"TESTING": True, "USE_LEGACY": False, "WEB_RUNS_DIR": web})
+    app.test_client().post("/analyze", data={"sample": "synthetic/Synthetic_Foxtrot_1000_S1Hand.tif"})
+    assert not old.exists()          # expired analysis removed
+    assert fresh.exists()            # recent analysis kept
+    assert other.exists()            # anything that is not an analysis folder is never touched
+
+
+def test_results_kept_by_default(client):
+    assert client.application.config["RESULT_TTL_HOURS"] == 0
+
+
+def test_committed_model_is_found_when_no_local_runs(tmp_path, monkeypatch):
+    import sar_flood.web.app as webapp
+
+    monkeypatch.delenv("SAR_FLOOD_RUN_DIR", raising=False)
+    monkeypatch.setenv("SAR_OUTPUT_DIR", str(tmp_path / "outputs"))  # no local runs
+    monkeypatch.setattr(webapp, "PROJECT_ROOT", tmp_path)
+    assert webapp.find_run_dir() is None
+    run = tmp_path / "models" / "unet" / "real_run"
+    run.mkdir(parents=True)
+    (run / "model.keras").write_bytes(b"x")
+    (run / "metadata.json").write_text("{}")
+    assert webapp.find_run_dir() == run
+    local = tmp_path / "outputs" / "runs" / "mine"
+    local.mkdir(parents=True)
+    (local / "model.keras").write_bytes(b"x")
+    (local / "metadata.json").write_text("{}")
+    assert webapp.find_run_dir() == local  # your own runs take priority locally

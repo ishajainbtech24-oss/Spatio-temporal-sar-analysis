@@ -52,3 +52,18 @@ jobs:
           sar-flood predict samples/synthetic/Synthetic_Foxtrot_1000_S1Hand.tif --run-dir outputs/runs/smoke_synthetic --out outputs/predictions/ci
         env:
           TF_CPP_MIN_LOG_LEVEL: "3"
+
+  docker:
+    # Builds the deployment image (lite variant for speed) and checks it serves pages.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build --build-arg WITH_TF=0 -t sar-flood:lite .
+      - name: Run container and check pages
+        run: |
+          docker run -d -p 7860:7860 --name app sar-flood:lite
+          for i in $(seq 1 30); do curl -fs localhost:7860/api/health && break; sleep 2; done
+          curl -fs -o /dev/null localhost:7860/
+          curl -fs -o /dev/null localhost:7860/analyze
+          curl -fs -o /dev/null -w "%{http_code}\n" -d "sample=synthetic/Synthetic_Foxtrot_1000_S1Hand.tif" localhost:7860/analyze
+          docker logs app

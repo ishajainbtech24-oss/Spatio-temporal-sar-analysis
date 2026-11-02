@@ -36,6 +36,7 @@ outputs/
 # Keras checkpoints are generated under outputs/; the three legacy models are tracked on purpose
 *.keras
 !models/legacy/*.keras
+!models/unet/*/model.keras
 
 # --- logs & OS cruft
 *.log

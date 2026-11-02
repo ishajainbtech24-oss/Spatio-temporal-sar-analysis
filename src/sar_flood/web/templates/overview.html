@@ -1,82 +1,88 @@
 {% extends "base.html" %}
-{% block title %}Overview{% endblock %}
-{% block content %}
-<section class="hero">
-  <div class="hero__text">
-    <h1>Where radar sees water through cloud</h1>
-    <p class="lede">Calm water reflects Sentinel-1's radar pulse away from the satellite, so it shows up as the darkest pixels in a SAR image — day or night, through cloud. This tool maps that water pixel by pixel on Sen1Floods11 chips and compares a learned model against classical thresholds.</p>
-    <p class="actions">
-      <a class="btn btn--primary" href="{{ url_for('analyze_form') }}">Analyse a chip</a>
-      <a class="btn" href="{{ url_for('evaluation') }}">See evaluation</a>
-    </p>
-  </div>
-  <figure class="hero__figure" aria-label="Backscatter by surface type">
-    <svg viewBox="0 0 360 220" role="img">
-      <title>Typical C-band VV backscatter: open water about -20 dB, land about -9 dB</title>
-      <line x1="40" y1="190" x2="340" y2="190" class="axis"/>
-      {% for db in [-25, -20, -15, -10, -5, 0] %}
-        {% set x = 40 + (db + 25) * 12 %}
-        <line x1="{{ x }}" y1="190" x2="{{ x }}" y2="196" class="axis"/>
-        <text x="{{ x }}" y="212" class="tick">{{ db }}</text>
-      {% endfor %}
-      <path d="M40 190 C 80 190, 95 40, 100 40 S 125 190, 160 190" class="curve curve--water"/>
-      <path d="M160 190 C 200 190, 225 80, 232 80 S 270 190, 340 190" class="curve curve--land"/>
-      <text x="100" y="30" class="lab">open water</text>
-      <text x="232" y="70" class="lab">land, vegetation</text>
-      <line x1="160" y1="20" x2="160" y2="190" class="th"/>
-      <text x="164" y="112" class="tick">−15 dB rule of thumb</text>
-    </svg>
-    <figcaption>Illustrative VV backscatter distributions (dB). The learned model must beat a simple threshold on this axis to earn its place.</figcaption>
-  </figure>
-</section>
+{% from "_icons.html" import icon %}
+{% block title %}Flood maps from radar satellites{% endblock %}
+{% block body_class %}landing{% endblock %}
+{% block head %}
+  <link rel="preload" as="image" href="{{ url_for('static', filename='images/hero-radar.webp') }}">
+  <link rel="preload" as="image" href="{{ url_for('static', filename='images/hero-flood.webp') }}">
+{% endblock %}
 
-<section class="band">
-  <h2>How a chip is processed</h2>
-  <ol class="steps">
-    <li><strong>Read</strong> a 2-band GeoTIFF (VV, VH in dB). No-data pixels stay masked all the way through.</li>
-    <li><strong>Despeckle</strong> with a NaN-aware 3×3 median filter.</li>
-    <li><strong>Scale</strong> backscatter with a fixed −50…1 dB range, so absolute brightness — the water cue — is kept.</li>
-    <li><strong>Segment</strong> with a U-Net whose encoder was first trained as an autoencoder on unlabelled training chips.</li>
-    <li><strong>Compare</strong> with Otsu and fixed −15 dB thresholds, and with ground truth when it is supplied.</li>
-  </ol>
-</section>
+{% block nav %}
+  <a href="#about">About</a>
+  <a href="#how">How it works</a>
+  <a class="btn btn--primary btn--nav" href="{{ url_for('analyze_form') }}">Start analysis</a>
+{% endblock %}
 
-<section class="band band--split">
-  <div>
-    <h2>Models on this server</h2>
-    <dl class="facts">
-      <dt>U-Net checkpoint</dt>
-      <dd>
-        {% if status.meta %}
-          <strong>{{ status.run_name }}</strong>, trained on
-          {% if status.meta.data_source == 'synthetic' %}
-            <span class="tag tag--warn">synthetic data</span> — demonstrates the workflow only, not real-world skill.
-          {% else %}
-            <span class="tag">{{ status.meta.data_source }}</span> ({{ status.meta.n_train }} training chips, {{ status.meta.split_strategy }} split).
-          {% endif %}
-          Validation IoU {{ status.meta.val_metrics.micro.iou | num }} at threshold {{ status.meta.threshold | num(2) }}.
-        {% else %}
-          None yet. Train one with <code>sar-flood train</code>; until then the dashboard runs the threshold baselines.
-        {% endif %}
-        {% if status.segmenter_error %}<br><span class="tag tag--warn">could not load ({{ status.segmenter_error }})</span>{% endif %}
-      </dd>
-      <dt>Threshold baselines</dt>
-      <dd>Always available: per-chip Otsu on VV, and a fixed −15 dB VV threshold.</dd>
-      <dt>Legacy scene classifier</dt>
-      <dd>
-        {% if status.legacy_available %}
-          MobileNetV2 + transformer from the original notebooks. It answers a chip-level question and its output was mislabelled before; it is shown as “probability the chip contains no water”.
-        {% else %}Disabled.{% endif %}
-      </dd>
-    </dl>
-  </div>
-  <div>
-    <h2>Scope and limits</h2>
-    <ul class="plain">
-      <li>Labels mark <em>all</em> surface water in the post-event image, including rivers and lakes. Output is a water map; a flood map also needs a pre-event or permanent-water layer.</li>
-      <li>Each Sen1Floods11 hand-labelled chip is a single acquisition, so nothing here models change over time.</li>
-      <li>Only metrics written by <code>sar-flood evaluate</code> appear on the evaluation page.</li>
-    </ul>
-  </div>
-</section>
+{% block main %}
+<main id="main">
+  {# ------------------------------------------------------------------ hero #}
+  <section class="hero2" data-compare style="--pos: 58%">
+    <div class="hero2__media" aria-hidden="true">
+      <img class="hero2__img" src="{{ url_for('static', filename='images/hero-radar.webp') }}" alt="" width="1800" height="1013" fetchpriority="high">
+      <img class="hero2__img hero2__img--flood" src="{{ url_for('static', filename='images/hero-flood.webp') }}" alt="" width="1800" height="1013">
+      <div class="hero2__divider"><span class="hero2__handle"></span></div>
+      <span class="hero2__tag hero2__tag--left">Radar image</span>
+      <span class="hero2__tag hero2__tag--right">Flood map</span>
+    </div>
+    <label class="visually-hidden" for="compare">Compare the radar image with its flood map</label>
+    <input class="hero2__range" id="compare" type="range" min="0" max="100" value="58" data-compare-range>
+
+    <div class="hero2__content">
+      <h1>See where the water is, even through cloud.</h1>
+      <p>Radar satellites see the ground in any weather. This tool turns their images into clear flood maps.</p>
+      <a class="btn btn--primary btn--lg" href="{{ url_for('analyze_form') }}">Start analysis</a>
+    </div>
+    <p class="hero2__caption">Drag to compare. Illustration.</p>
+  </section>
+
+  {# ------------------------------------------------------------------ about #}
+  <section class="lp lp--about" id="about">
+    <div class="lp__inner about">
+      <div class="about__text">
+        <h2>Floods come with clouds.</h2>
+        <p>Heavy cloud hides flooded land from ordinary satellite cameras, often when the view matters most. Radar sees straight through it, so the water can be mapped right away.</p>
+      </div>
+      <figure class="about__figure">
+        <img src="{{ url_for('static', filename='images/detail-flood.webp') }}" alt="Flooded fields along a river, with the water shown in coral" width="810" height="540" loading="lazy">
+        <figcaption>Water shown in coral. Illustration.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  {# ------------------------------------------------------------------ how #}
+  <section class="lp lp--how" id="how">
+    <div class="lp__inner">
+      <h2>How it works</h2>
+      <ol class="steps2">
+        <li>
+          <span class="steps2__icon">{{ icon("satellite") }}</span>
+          <h3><span class="steps2__n">1</span>Satellite image</h3>
+          <p>Upload a radar image, or try one of ours.</p>
+        </li>
+        <li>
+          <span class="steps2__icon">{{ icon("drop") }}</span>
+          <h3><span class="steps2__n">2</span>Flood analysis</h3>
+          <p>Every part of the image is checked for water.</p>
+        </li>
+        <li>
+          <span class="steps2__icon">{{ icon("map") }}</span>
+          <h3><span class="steps2__n">3</span>Visual results</h3>
+          <p>See the flood map, the area covered and a report to download.</p>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  {# ------------------------------------------------------------------ cta #}
+  <section class="lp lp--cta">
+    <div class="cta2" style="--band: url('{{ url_for('static', filename='images/band-radar.webp') }}')">
+      <h2>Try it with a sample image.</h2>
+      <a class="btn btn--primary btn--lg" href="{{ url_for('analyze_form') }}">Start analysis</a>
+    </div>
+  </section>
+</main>
+{% endblock %}
+
+{% block scripts %}
+  <script src="{{ url_for('static', filename='js/landing.js') }}" defer></script>
 {% endblock %}

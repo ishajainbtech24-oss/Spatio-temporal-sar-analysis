@@ -1,8 +1,12 @@
 {% extends "base.html" %}
-{% block title %}{{ code }}{% endblock %}
+{% block title %}{{ title or code }}{% endblock %}
 {% block content %}
 <div class="panel empty">
-  <h1 class="page-title">{{ message }}</h1>
-  <p><a class="btn" href="{{ url_for('overview') }}">Go to the overview</a></p>
+  {% if title %}<h1 class="page-title">{{ title }}</h1><p class="lede">{{ message }}</p>
+  {% else %}<h1 class="page-title">{{ message }}</h1>{% endif %}
+  <p class="actions">
+    {% if action_url %}<a class="btn btn--primary" href="{{ action_url }}">{{ action_label }}</a>{% endif %}
+    <a class="btn" href="{{ url_for('overview') }}">Back to dashboard</a>
+  </p>
 </div>
 {% endblock %}

@@ -13,3 +13,19 @@ window.addEventListener("pageshow", () => {
   document.querySelectorAll("form[data-busy-form] button[type=submit]").forEach((b) => (b.disabled = false));
   document.querySelectorAll("form[data-busy-form] .busy").forEach((b) => (b.hidden = true));
 });
+
+// Mobile navigation toggle (all pages).
+(function () {
+  const toggle = document.querySelector("[data-navtoggle]");
+  const nav = document.getElementById("mainnav");
+  if (!toggle || !nav) return;
+  const set = (open) => {
+    toggle.setAttribute("aria-expanded", open ? "true" : "false");
+    nav.classList.toggle("is-open", open);
+    document.body.classList.toggle("nav-open", open);
+  };
+  toggle.addEventListener("click", () => set(toggle.getAttribute("aria-expanded") !== "true"));
+  nav.addEventListener("click", (e) => { if (e.target.closest("a")) set(false); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") set(false); });
+  window.matchMedia("(min-width: 761px)").addEventListener("change", (m) => { if (m.matches) set(false); });
+})();
